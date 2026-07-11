@@ -17,6 +17,44 @@ agent_created: true
 
 周报解决"本周重点看什么"，知识库解决"以后能找到什么"。两条管道共享同一个内容发现层，在评分环节分叉。
 
+**本 skill 的核心交付模式是「配置一次，每周自动推送」——不是每次手动触发。** 配置完成后依赖外部调度层（WorkBuddy Automation / GitHub Actions cron / 系统 cron）每周定时触发，用户只需读周报。
+
+## 自动化配置
+
+本 skill 需要外部调度层定时触发。以下是三种推荐方式：
+
+### 方式 A：WorkBuddy Automation（推荐）
+
+在 WorkBuddy 中创建自动化任务，每周一早 9:00 自动执行：
+
+```
+schedule: FREQ=WEEKLY;BYDAY=MO;BYHOUR=9;BYMINUTE=0
+prompt: 使用 legal-weekly-briefing skill 生成本周法律周报，拉取近一周公众号文章，评分排序后输出周报并入库 IMA。
+```
+
+> 注意：自动化任务和日常对话共用同一模型额度池。若额度紧张，建议用方式 B 隔离执行环境。
+
+### 方式 B：GitHub Actions cron
+
+将本仓库 Fork 后，添加 `.github/workflows/weekly-briefing.yml`：
+
+```yaml
+on:
+  schedule:
+    - cron: '0 1 * * 1'  # 每周一北京时间 9:00
+```
+
+这种方式隔离额度，且运行日志可追溯。
+
+### 方式 C：系统 cron / launchd
+
+```bash
+# macOS launchd: ~/Library/LaunchAgents/com.legal-weekly.plist
+# 每周一早 9:00 运行 pipeline
+```
+
+---
+
 ## 分级架构
 
 为降低开源用户的门槛，架构按依赖关系分为四级。每一级可以独立运行，上层依赖下层。
