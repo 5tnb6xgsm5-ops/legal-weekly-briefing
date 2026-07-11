@@ -1,0 +1,37 @@
+# 内容发现源配置
+# 开源用户：删除 fakeid 或设 mp_enabled: false 即可纯 WebSearch 运行
+
+mp:
+  enabled: true
+  # 微信公众平台后台 fakeid（从 MP 后台 URL 获取，非公众号原始 ID）
+  # 开源用户若无后台权限，直接留空列表或 enabled: false
+  accounts:
+    - name: "山东高法"
+      fakeid: "MzA5MDAxMjk5Ng=="
+    - name: "上海一中院"
+      fakeid: "MjM5MjkwMDkxMA=="
+    - name: "上海二中院"
+      fakeid: "MzA4MzY3NjMxNw=="
+  # session 刷新脚本路径（可选，依赖本机 Edge 登录 MP）
+  # 脚本不随仓库分发，需用户自行放置或配置
+  refresh_script: "skills/wechat-ocr-research/scripts/refresh_session_from_edge.py"
+  per_account_limit: 30
+
+websearch:
+  # 必查关键词（通用化，去掉个人专属地域）
+  # 开源用户可按执业领域增删
+  required_keywords:
+    - "最高法 最新发布 site:court.gov.cn"
+    - "国务院 法规更新 site:gov.cn"
+    - "最高人民法院 典型案例 入库案例"
+    - "法律 司法解释 征求意见稿"
+    - "AI 法律 法律科技 最新动态"
+  # 辅助：法院公众号（无结果不阻塞）
+  court_accounts:
+    - "山东高法"
+    - "上海一中法院"
+    - "上海二中院"
+  # 英文 AI+法律源（国际动态）
+  en_keywords:
+    - "AI law legal tech latest"
+    - "legal AI product launch"

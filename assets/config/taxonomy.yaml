@@ -1,0 +1,57 @@
+# IMA 知识库分类映射
+# folder_id / knowledge_base_id 从用户自己的 IMA 后台获取后替换下方占位符
+# 获取方式：IMA 网页版 → 知识库 → 对应文件夹 → 地址栏 URL 中的 folder_id
+# knowledge_base_id：知识库设置页或 URL 中的 kb_id
+
+knowledge_base_id: "YOUR_KNOWLEDGE_BASE_ID"
+
+# 领域 → folder_id 映射
+# 匹配规则：标题/标签命中 keywords 任一即归入该领域
+# 下方 folder_id 均为占位符，替换为你的 IMA 实际 folder_id 后方可导入
+categories:
+  - name: "婚姻家事"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["婚姻", "家事", "抚养", "继承", "夫妻债务", "夫妻共同债务", "夫妻", "离婚", "遗嘱", "彩礼", "婚约", "遗赠", "探望权", "变更抚养", "挥霍", "共同财产", "子女", "上学"]
+    priority: 10
+  - name: "公司"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["公司法", "股权", "股东", "解散", "代持", "法人", "出资", "决议", "章程", "新质生产力", "企业"]
+    priority: 8
+  - name: "合同借贷"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["合同", "借贷", "担保", "抵押", "债务", "定金", "租赁", "租车", "培训", "退费", "缔约", "买卖", "卖方", "买方", "违约金", "订金"]
+    priority: 8
+  - name: "建筑工程"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["以房抵债", "工程款", "建设工程", "施工", "开发商", "包工头", "分包", "转包"]
+    priority: 9
+  - name: "交通事故"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["道交", "事故", "保险理赔", "交强险", "保险", "代驾", "定损", "互碰", "肇事", "投保", "准驾"]
+    priority: 9
+  - name: "劳动法"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["劳动", "工伤", "解除", "竞业", "调岗", "旷工", "解雇", "社保", "试用期", "工资", "帮工", "加班", "病假", "产假", "经济补偿", "退休"]
+    priority: 9
+  - name: "刑事"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["刑事", "渎职", "罪名", "命案", "诈骗", "非法经营", "职务侵占", "挪用资金", "非法集资"]
+    priority: 7
+  - name: "管辖"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["管辖", "地域", "级别", "仲裁", "主管"]
+    priority: 6
+  - name: "房地产/物权"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["业主权利", "物权变动", "相邻关系", "不动产登记", "房屋买卖", "物业纠纷", "网约房", "物业", "业主", "交房", "收房", "拆迁", "漏水", "采暖", "停车位", "拆迁补偿"]
+    priority: 8
+
+  - name: "侵权"
+    folder_id: "YOUR_FOLDER_ID"
+    keywords: ["侵权", "受伤", "游乐场", "安全保障", "帮工", "过错", "饲养动物", "高空抛物", "自甘风险"]
+    priority: 8
+
+# 兜底：无领域命中时放入此文件夹（用户需自建或留空由 IMA 放根目录）
+uncategorized_folder_id: ""
+
+# 多领域命中裁决：取 priority 最高者为主类，其余记录为副类标签

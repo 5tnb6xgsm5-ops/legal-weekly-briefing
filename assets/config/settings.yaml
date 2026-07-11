@@ -1,0 +1,68 @@
+# 评分引擎与全局设置
+# 权重/阈值/兴趣赛道均可被开源用户按自身执业方向调整
+
+scoring:
+  # 配置 schema 版本（v2: AI+法律引入 signal_strength/domestic_relevance）
+  schema_version: 2
+  # 法律条目特征权重（维度有区分度，维持不变）
+  legal_weights:
+    author_tier: 0.35
+    platform_tier: 0.30
+    depth: 0.20
+    relevance: 0.15
+  # AI+法律条目特征权重（v2 重构）
+  # signal_strength: 1格局级/2应用落地/3融资动态（提供区分度，替代零方差的 author/platform）
+  # domestic_relevance: 0/1 国内参考价值（仅作呈现标签，不进排序——见 scoring_engine）
+  # author_tier/platform_tier: deprecated 置 0（保留字段兼容旧训练集，不删）
+  ai_legal_weights:
+    signal_strength: 0.50
+    depth: 0.25
+    relevance: 0.15
+    domestic_relevance: 0.10
+    author_tier: 0.00
+    platform_tier: 0.00
+  # k-NN 近邻数（固定 5，训练集扩大后可调）
+  k: 5
+  # 置信度阈值（仅用于写入报告元数据，不再视觉告警）
+  confidence_threshold: 0.80
+  # 训练集路径（相对技能根目录；缺省指向内置 62 条标注样本）
+  # 开源用户可替换为自己的标注集：拷贝 assets/data/scoring-training.jsonl 后改此值
+  training_path: "assets/data/scoring-training.jsonl"
+  # 兴趣赛道加成（标题命中 +0.3）
+  # 开源用户替换为自己的核心执业领域关键词
+  interest_keywords:
+    - "婚姻"
+    - "家事"
+    - "抚养"
+    - "继承"
+    - "离婚"
+    - "恋爱"
+    - "公司"
+    - "股东"
+    - "股权"
+    - "法人"
+    - "商标"
+    - "医疗"
+    - "诊疗"
+    - "知情"
+
+output:
+  # 周报文件名模板
+  report_template: "周报_{date}.md"
+  # 候选池最小数量（自检断言用）
+  min_candidates: 10
+  # 交付条数
+  ai_legal_count: 3
+  legal_count: 7
+  # 来源多样性：同一来源在周报中最多出现的条数（0=不限制）
+  max_per_source: 2
+  # IMA 导入最低分数阈值（>=此分的法院公众号来源条目全量导入 IMA，不受周报条数限制）
+  ima_import_threshold: 8.0
+
+pipeline:
+  # 失败重试次数
+  max_retries: 3
+  # 重试退避基数（秒）
+  retry_backoff: 2
+  # 运行日志目录
+  runs_dir: ".workbuddy/runs"

@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "description": "legal-weekly-briefing 验证样例：每条含输入特征 + 期望分数区间 + 说明。用于回归测试与开源用户自检。",
+  "cases": [
+    {
+      "id": "legal-01",
+      "category": "legal",
+      "title": "公司决议效力瑕疵判断及风险提示",
+      "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1},
+      "expect_min": 8.8,
+      "expect_max": 9.2,
+      "note": "中院品牌栏目体系化方法论，应为 top 档"
+    },
+    {
+      "id": "legal-02",
+      "category": "legal",
+      "title": "遗嘱里的沪语密码",
+      "features": {"author_tier": 2, "platform_tier": 3, "depth": 2, "relevance": 1},
+      "expect_min": 8.2,
+      "expect_max": 8.8,
+      "note": "中院个案叙事，depth=2 应低于体系化方法论"
+    },
+    {
+      "id": "legal-03",
+      "category": "legal",
+      "title": "包工头招用的工人受伤谁来承担工伤责任",
+      "features": {"author_tier": 2, "platform_tier": 3, "depth": 2, "relevance": 1},
+      "expect_min": 8.2,
+      "expect_max": 8.8,
+      "note": "与 legal-02 同向量，分数应接近但不等于 legal-01"
+    },
+    {
+      "id": "legal-04",
+      "category": "legal",
+      "title": "最高法发布第四批示范文本",
+      "features": {"author_tier": 1, "platform_tier": 1, "depth": 2, "relevance": 1},
+      "expect_min": 8.8,
+      "expect_max": 9.5,
+      "note": "最高法来源，平台+作者双高"
+    },
+    {
+      "id": "ai-legal-01",
+      "category": "ai-legal",
+      "title": "Harvey × Microsoft 365 原生集成",
+      "features": {"signal_strength": 1, "depth": 1, "relevance": 2, "domestic_relevance": 0},
+      "expect_min": 9.0,
+      "expect_max": 9.8,
+      "note": "格局级信号 + 具体细节，应为 AI+法律最高档"
+    },
+    {
+      "id": "ai-legal-02",
+      "category": "ai-legal",
+      "title": "某 AI 法律培训公司完成 B 轮融资",
+      "features": {"signal_strength": 3, "depth": 2, "relevance": 2, "domestic_relevance": 0},
+      "expect_min": 4.5,
+      "expect_max": 6.5,
+      "note": "融资动态级，分数应明显低于格局级"
+    }
+  ],
+  "anti_patterns": [
+    {
+      "id": "anti-01",
+      "description": "所有候选标注相同特征向量 → 评分全部相同",
+      "check": "若 3+ 条候选分数完全相同且来自同来源同深度，说明特征标注未区分 depth",
+      "fix": "按 depth 分层：体系化方法论(depth=1) vs 个案叙事(depth=2) vs 综述(depth=3)"
+    }
+  ]
+}
