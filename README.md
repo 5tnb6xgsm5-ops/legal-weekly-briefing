@@ -7,7 +7,7 @@
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![author](https://img.shields.io/badge/author-吴律-7c5e3e)](https://github.com/5tnb6xgsm5-ops)
 
-> 🎬 [查看 Demo 周报效果](https://github.com/xxx/legal-weekly-briefing/blob/main/assets/showcase/demo-weekly.png)
+> [查看 Demo 周报效果](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/blob/main/assets/showcase/demo-weekly.png)
 
 ## 5 分钟看到产出
 
@@ -69,8 +69,8 @@ PYTHONPATH=scripts python3 scripts/verify.py
 
 **输入**（`candidates.jsonl` 节选）：
 ```json
-{"title":"公司决议效力瑕疵判断及风险提示","url":"https://mp.weixin.qq.com/s/xxx",
- "category":"legal","source":"上海一中院",
+{"title":"董监高违反勤勉义务的赔偿责任认定","url":"http://mp.weixin.qq.com/s?__biz=MzA4MzY3NjMxNw==&mid=2656555271&idx=1&sn=b1400188c0f5bacf94f7b60371abfb3b&chksm=8451acf5b32625e3#rd",
+ "category":"legal","source":"上海二中院",
  "features":{"author_tier":2,"platform_tier":3,"depth":1,"relevance":1}}
 ```
 
@@ -82,11 +82,11 @@ PYTHONPATH=scripts python3 scripts/verify.py
 
 ## AI + 法律
 【9.5】Harvey × Microsoft 365 原生集成
-https://example.com/harvey
+https://www.harvey.ai/blog/harvey-accelerates-enterprise-ai
 
 ## 纯法律
-【9.0】公司决议效力瑕疵判断及风险提示
-https://mp.weixin.qq.com/s/xxx
+【9.0】董监高违反勤勉义务的赔偿责任认定
+http://mp.weixin.qq.com/s?__biz=MzA4MzY3NjMxNw==&mid=2656555271&idx=1&sn=b1400188c0f5bacf...
 ```
 
 ## 它和同类有什么不同？
