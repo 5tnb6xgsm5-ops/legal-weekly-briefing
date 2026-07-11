@@ -258,6 +258,19 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
     report["report_path"] = report_path
     log_stage(report, "write_report", path=report_path)
 
+    # Stage 4.5: 渲染 HTML 周报
+    try:
+        from render_html import render_html as _render
+        report_date = d.strftime('%Y.%m.%d')
+        html = _render(scored, report_date)
+        html_path = str(Path(report_path).with_suffix('.html'))
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html)
+        report["html_path"] = html_path
+        log_stage(report, "render_html", path=html_path)
+    except Exception as e:
+        log_stage(report, "render_html", error=str(e))
+
     # Stage 5: IMA 导入（默认写队列，启用了阈值过滤）
     if import_fn is None:
         from ima_importer import import_one
