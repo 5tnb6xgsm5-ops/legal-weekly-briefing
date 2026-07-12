@@ -9,6 +9,18 @@
 
 > [查看 Demo 周报效果](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/blob/main/assets/showcase/demo-weekly.png)
 
+## 🚀 安装（30 秒）
+
+**只需把这个仓库地址发给 AI 工具：**
+
+```
+https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing
+```
+
+然后说一句：**"帮我安装这个 skill"**——WorkBuddy 会自动 clone、配置、就绪。
+
+> 也可以手动安装：下载 [最新 Release](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/releases/latest)，解压到 `~/.workbuddy/skills/legal-weekly-briefing/`。
+
 ## 5 分钟看到产出
 
 ```bash
