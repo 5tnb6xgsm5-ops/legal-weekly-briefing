@@ -13,7 +13,8 @@ mp:
     - name: "上海二中院"
       fakeid: "MzA4MzY3NjMxNw=="
   # session 刷新脚本路径（可选，依赖本机 Edge 登录 MP）
-  # 脚本不随仓库分发，需用户自行放置或配置
+  # 路径相对于 $HOME/.workbuddy/skills/ 目录。需先安装 wechat-ocr-research skill
+  # GitHub: https://github.com/5tnb6xgsm5-ops/wechat-ocr-research
   refresh_script: "skills/wechat-ocr-research/scripts/refresh_session_from_edge.py"
   per_account_limit: 30
 
