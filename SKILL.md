@@ -375,7 +375,7 @@ IMA OpenAPI 端点: `POST https://ima.qq.com/openapi/wiki/v1/import_urls`
 - Level 1 已配置（Level 2 不是 Level 3 的前置；可直接从 Level 1 跳 Level 3）
 - 微信公众号后台管理权限（mp.weixin.qq.com）
 - 本机 Microsoft Edge 浏览器
-- 项目内已有 `skills/wechat-ocr-research/`（独立 skill，需单独安装）
+- 项目内已有 `skills/wechat-ocr-research/`（独立 skill，[GitHub 仓库](https://github.com/5tnb6xgsm5-ops/wechat-ocr-research)，需单独安装）
 
 ### 工作原理
 
@@ -409,8 +409,9 @@ wechat_mp_reader.py → list_articles_via_mp_backend()
 - **如果从 GitHub 获取**：
   ```bash
   cd ~/.workbuddy/skills/
-  git clone https://github.com/your-org/wechat-ocr-research.git
+  git clone https://github.com/5tnb6xgsm5-ops/wechat-ocr-research.git
   ```
+- **WorkBuddy 用户一句话安装**：在对话中说「帮我安装 https://github.com/5tnb6xgsm5-ops/wechat-ocr-research」
 
 安装完成后确认目录存在：
 ```bash
@@ -527,7 +528,7 @@ Level 3 本质上做的是「自动发现候选文章」。如果无法使用 MP
 
 ---
 
-> ⚠️ `wechat-ocr-research` 是独立的 skill，未包含在本 skill 的打包中。用户需单独安装。开源用户若无 MP 权限，使用上述替代方案即可。
+> ⚠️ `wechat-ocr-research` 是独立的 skill，未包含在本 skill 的打包中。用户需单独安装：[GitHub 仓库](https://github.com/5tnb6xgsm5-ops/wechat-ocr-research) | WorkBuddy 内一句话「帮我安装 https://github.com/5tnb6xgsm5-ops/wechat-ocr-research」。开源用户若无 MP 权限，使用上述替代方案即可。
 
 ---
 
@@ -599,7 +600,7 @@ legal-weekly-briefing/
 
 | 依赖 | 说明 |
 |------|------|
-| `wechat-ocr-research` skill | MP 后台文章拉取 + session 管理 |
+| `wechat-ocr-research` skill | MP 后台文章拉取 + session 管理 → [GitHub](https://github.com/5tnb6xgsm5-ops/wechat-ocr-research) |
 | IMA OpenAPI 凭证 | `~/.config/ima/client_id` + `api_key` |
 | Microsoft Edge + MP 登录态 | 自动读 cookie 的前提 |
 | pyyaml | Python 包，pip install |
