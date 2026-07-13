@@ -28,8 +28,7 @@ except ImportError:
 
 # 技能根目录（scripts/ 的上一级），assets/ 与 scripts/ 同级
 BASE = Path(__file__).resolve().parent.parent
-SETTINGS = BASE / "assets" / "config" / "settings.yaml"
-RUNS_DIR = BASE / ".workbuddy" / "runs"
+SETTINGS_FILE = BASE / "assets" / "config" / "settings.yaml"
 
 
 class PipelineError(Exception):
@@ -45,18 +44,26 @@ class FatalError(PipelineError):
 
 
 def load_settings():
-    if yaml is None or not SETTINGS.exists():
+    if yaml is None or not SETTINGS_FILE.exists():
         return {}
-    with open(SETTINGS) as f:
+    with open(SETTINGS_FILE) as f:
         return yaml.safe_load(f) or {}
+
+
+def _get_runs_dir():
+    """读取 settings.yaml 的 runs_dir，回退到 'runs'。"""
+    settings = load_settings()
+    runs_dir = settings.get("pipeline", {}).get("runs_dir", "runs")
+    return BASE / runs_dir
 
 
 def log_stage(report, stage, **kw):
     entry = {"ts": time.time(), "stage": stage, **kw}
     report["stages"].append(entry)
     # 结构化日志落盘
-    RUNS_DIR.mkdir(parents=True, exist_ok=True)
-    logfile = RUNS_DIR / f"{date.today().isoformat()}.jsonl"
+    runs_dir = _get_runs_dir()
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    logfile = runs_dir / f"{date.today().isoformat()}.jsonl"
     with open(logfile, 'a') as f:
         f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     return entry
