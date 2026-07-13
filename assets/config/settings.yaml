@@ -65,4 +65,5 @@ pipeline:
   # 重试退避基数（秒）
   retry_backoff: 2
   # 运行日志目录（相对于 skill 根目录）
+  # "runs"（通用）/ ".workbuddy/runs"（WorkBuddy 用户）
   runs_dir: "runs"
