@@ -7,6 +7,7 @@ set -e
 
 SKILL_NAME="legal-weekly-briefing"
 SKILL_DIR="${SKILL_DIR:-$HOME/.workbuddy/skills/$SKILL_NAME}"
+REPO_URL="${REPO_URL:-https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing.git}"
 
 echo "📦 安装 $SKILL_NAME ..."
 
@@ -16,16 +17,12 @@ if [ -d "$SKILL_DIR/.git" ]; then
     cd "$SKILL_DIR" && git pull --ff-only
 else
     # 首次安装：克隆仓库
-    if [ -n "$REPO_URL" ]; then
-        git clone "$REPO_URL" "$SKILL_DIR"
-    elif [ -f "requirements.txt" ] || [ -f "SKILL.md" ]; then
+    if [ -f "SKILL.md" ]; then
         # 本地目录模式：已经在 skill 目录中
         SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
         echo "  本地安装: $SKILL_DIR"
     else
-        echo "❌ 请设置 REPO_URL 环境变量指向你的 legal-weekly-briefing 仓库"
-        echo "   示例: REPO_URL=https://github.com/YOU/legal-weekly-briefing bash install.sh"
-        exit 1
+        git clone "$REPO_URL" "$SKILL_DIR"
     fi
 fi
 
