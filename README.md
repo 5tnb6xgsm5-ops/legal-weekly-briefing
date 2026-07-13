@@ -161,7 +161,7 @@ PYTHONPATH=scripts python3 scripts/verify.py
 |-------|------|------|
 | **Level 1** | Python 3.9+ | 评分引擎 + 周报生成（零外部依赖） |
 | **Level 2** | + IMA 账号 | 全量入库 IMA 知识库（RAG 检索增强） |
-| **Level 3** | + MP 后台权限 | 自动拉取法院公众号三账号文章（需 wechat-ocr-research skill） |
+| **Level 3** | + MP 后台权限 | 自动拉取法院公众号三账号文章（需 [wechat-ocr-research](https://github.com/5tnb6xgsm5-ops/wechat-ocr-research) skill） |
 
 每一级可独立运行，上层依赖下层。开源用户若无 MP 权限，用 WebSearch 替代 Level 3 的内容发现即可。
 
