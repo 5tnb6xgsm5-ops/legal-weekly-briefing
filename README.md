@@ -5,7 +5,7 @@
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-compatible-22c55e)](https://docs.anthropic.com/en/docs/claude-code/skills)
 [![Level 1](https://img.shields.io/badge/Level%201-zero--deps-blue)](scripts/scoring_engine.py)
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![author](https://img.shields.io/badge/author-吴律-7c5e3e)](https://github.com/5tnb6xgsm5-ops)
+[![community](https://img.shields.io/badge/community-open%20source-7c5e3e)](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing)
 
 > [查看 Demo 周报效果](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/blob/main/assets/showcase/demo-weekly.png)
 
@@ -153,7 +153,7 @@ PYTHONPATH=scripts python3 scripts/verify.py
 
 期望输出：`6 通过 / 0 失败`。若失败，说明 `assets/config/` 路径未被正确加载（检查 `BASE` 解析），或训练集格式损坏。
 
-**真实数据回放**：将你自己的周报候选粘贴为 `candidates.jsonl`，跑 `run_pipeline.py`，对比输出分数与你的主观判断。62 条训练集偏"永康市执业律师"视角，若你的领域不同，直接编辑 `scoring-training.jsonl` 的标注即可——引擎会自动 coalesce 同向量、冷启动兜底。
+**真实数据回放**：将你自己的周报候选粘贴为 `candidates.jsonl`，跑 `run_pipeline.py`，对比输出分数与你的主观判断。62 条训练集偏特定执业方向视角，若你的领域不同，直接编辑 `scoring-training.jsonl` 的标注即可——引擎会自动 coalesce 同向量、冷启动兜底。
 
 ## 分级架构（按需取用）
 
