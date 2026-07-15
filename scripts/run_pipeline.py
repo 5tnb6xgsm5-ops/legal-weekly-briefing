@@ -268,7 +268,7 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
     # Stage 4.5: 渲染 HTML 周报
     try:
         from render_html import render_html as _render
-        report_date = d.strftime('%Y.%m.%d')
+        report_date = date.today().strftime('%Y.%m.%d')
         html = _render(scored, report_date)
         html_path = str(Path(report_path).with_suffix('.html'))
         with open(html_path, 'w', encoding='utf-8') as f:

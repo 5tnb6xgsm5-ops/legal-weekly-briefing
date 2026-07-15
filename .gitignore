@@ -4,3 +4,24 @@ __pycache__/
 周报_*.md
 run-report.json
 ima_import_queue.jsonl
+
+# === 安全红线：以下文件包含登录态/凭证/隐私数据，严禁提交 ===
+# MP 后台登录态
+cache/
+session.json
+*.session.json
+*.sess
+
+# 本地配置（含 API 凭证等敏感信息）
+config/.env
+.env
+.env.*
+
+# 运行生成文件
+mp_articles.json
+imported_cache.jsonl
+failed_import.jsonl
+candidates.jsonl
+周报_*.html
+demo_data_*.json
+*.pyc

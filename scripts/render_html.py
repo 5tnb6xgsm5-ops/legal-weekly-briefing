@@ -353,8 +353,6 @@ TEMPLATE = """<!DOCTYPE html>
   <div class="engine-info">
     legal-weekly-briefing
     <span>|</span>
-    吴律
-    <span>|</span>
     k-NN 评分引擎 v2.1
     <span>|</span>
     双管道分流（周报 + IMA 知识库）

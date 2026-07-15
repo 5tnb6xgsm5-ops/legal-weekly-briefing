@@ -10,7 +10,7 @@
 #     author_tier: 1=最高法法官/知名学者, 2=省高院/中院法官, 3=基层/公众号编辑, 4=媒体/机构
 #     platform_tier: 1=入库案例/最高法公报, 2=中国审判/人民法院报, 3=法院公众号品牌栏目, 4=法院公众号一般, 5=媒体/聚合站
 #     depth: 1=有裁判规则+观点交锋+结论, 2=有具体分析, 3=会议综述/新闻
-#     relevance: 1=直接对标永康实务, 2=有一���参考, 3=泛法律/泛资讯
+#     relevance: 1=直接对标本地实务, 2=有一���参考, 3=泛法律/泛资讯
 #     first_hand: 1=一手消息（律所/产品官方）, 0=二手中转
 #   scoring_note: 评分依据
 #   deviation: null（首次校准，后续填入AI预测分和偏差值）
@@ -24,20 +24,20 @@
 {"id": "L008", "title": "最高法涉AI纠纷司法意见起草进展", "category": "legal", "source": "最高法", "score": 5, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 3}, "scoring_note": "咨询类新闻,非正式司法解释", "deviation": null}
 {"id": "L009", "title": "承重墙被拆买方能否退房", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 2}, "scoring_note": "山东高法基础案例,地域参考性一般", "deviation": null}
 {"id": "L010", "title": "两份交强险重叠期间事故赔付", "category": "legal", "source": "山东高法公众号(转)", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 2}, "scoring_note": "山东高法基础案例", "deviation": null}
-{"id": "L011", "title": "建设工程买受人拒付质保金", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "永康建工纠纷高频,暂估7", "deviation": null}
+{"id": "L011", "title": "建设工程买受人拒付质保金", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "本地建工纠纷高频,暂估7", "deviation": null}
 {"id": "L012", "title": "集体经营性建设用地使用权收回纠纷研讨", "category": "legal", "source": "上海二中院·至正审判实务", "score": 8.2, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 2}, "scoring_note": "三级法院+政府专家,观点交锋,深度略欠", "deviation": null}
-{"id": "L013", "title": "单方变更岗位以旷工解除劳动合同", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "永康劳动纠纷高频", "deviation": null}
-{"id": "L014", "title": "恋爱期间大额转账借款还是赠与", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "永康民间借贷高频", "deviation": null}
-{"id": "L015", "title": "货车司机卸货时受伤车上人员险", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "永康物流+道交高频", "deviation": null}
+{"id": "L013", "title": "单方变更岗位以旷工解除劳动合同", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "本地劳动纠纷高频", "deviation": null}
+{"id": "L014", "title": "恋爱期间大额转账借款还是赠与", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "本地民间借贷高频", "deviation": null}
+{"id": "L015", "title": "货车司机卸货时受伤车上人员险", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "本地物流+道交高频", "deviation": null}
 {"id": "L016", "title": "借款抵押合同无效抵押登记效力", "category": "legal", "source": "山东高法公众号", "score": 7.5, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 2}, "scoring_note": "内容深度有,作者/来源对浙江参考性不够", "deviation": null}
 {"id": "L017", "title": "未成年人提供担保效力认定", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 2}, "scoring_note": "山东高法基础案例", "deviation": null}
-{"id": "L018", "title": "被扶养人已获残疾赔偿金再主张生活费", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "永康道交高频", "deviation": null}
+{"id": "L018", "title": "被扶养人已获残疾赔偿金再主张生活费", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 1}, "scoring_note": "本地道交高频", "deviation": null}
 {"id": "L019", "title": "小区电梯故障致人损害", "category": "legal", "source": "山东高法公众号", "score": 7, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 2}, "scoring_note": "山东高法基础案例", "deviation": null}
 {"id": "L020", "title": "假冒注册商标罪与非法制造商标标识罪", "category": "legal", "source": "郑州中院·中国审判", "score": 8, "features": {"author_tier": 2, "platform_tier": 2, "depth": 1, "relevance": 2}, "scoring_note": "中院法官+中国审判期刊,内容深度好", "deviation": null}
 {"id": "L021", "title": "民营经济促进法实施一周年", "category": "legal", "source": "发改委", "score": 5, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 2}, "scoring_note": "立法动态类新闻", "deviation": null}
 {"id": "L022", "title": "全国人大常委会2026年度立法计划", "category": "legal", "source": "全国人大", "score": 5, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 2}, "scoring_note": "立法动态", "deviation": null}
 {"id": "L023", "title": "行政法规制定程序条例修订版7/1施行", "category": "legal", "source": "国务院", "score": 4, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 3}, "scoring_note": "行政法规,无直接办案参考", "deviation": null}
-{"id": "L024", "title": "对外投资首部行政法规7/1施行", "category": "legal", "source": "国务院/司法部", "score": 4, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 2}, "scoring_note": "行政法规,永康企业出海有间接参考", "deviation": null}
+{"id": "L024", "title": "对外投资首部行政法规7/1施行", "category": "legal", "source": "国务院/司法部", "score": 4, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 2}, "scoring_note": "行政法规,本地企业出海有间接参考", "deviation": null}
 {"id": "L036", "title": "涉违章建筑房屋买卖合同疑难问题研讨会", "category": "legal", "source": "上海一中院", "score": 7.2, "features": {"author_tier": 2, "platform_tier": 3, "depth": 3, "relevance": 2}, "scoring_note": "嘉宾多但无具体结论", "deviation": null}
 {"id": "L037", "title": "庞建新:公司司法解散的法律问题解析", "category": "legal", "source": "上海一中院·衡石观点", "score": 9, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "标杆案例,法官署名+品牌栏目+具体结论", "deviation": null}
 {"id": "L038", "title": "期房楼梯间货不对板购房者有权要求赔偿", "category": "legal", "source": "上海一中院", "score": 7.8, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 2}, "scoring_note": "民生类非重大疑难,接近8但不到8", "deviation": null}
@@ -45,7 +45,7 @@
 {"id": "L040", "title": "离婚协议分走债权不了解这些你就亏了", "category": "legal", "source": "上海二中院·至正收藏夹", "score": 7, "features": {"author_tier": 3, "platform_tier": 3, "depth": 2, "relevance": 1}, "scoring_note": "实务性强,婚姻家事赛道", "deviation": null}
 {"id": "L041", "title": "李彦:抚养费案件的审理思路及要点分析", "category": "legal", "source": "上海二中院·至正法律研究", "score": 8.3, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "法官署名+品牌栏目,婚姻家事赛道,垂直有深度", "deviation": null}
 {"id": "L042", "title": "股东失权制度的体系解释与司法展开", "category": "legal", "source": "上海二中院·至正开放麦", "score": 8.7, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "华政+至正开放麦,嘉宾好但偏理论,公司赛道", "deviation": null}
-{"id": "L043", "title": "道交赔偿司法解释(二)条文解读", "category": "legal", "source": "上海二中院·新法探究", "score": 8.5, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "新法解读(司法解释刚发8.5,时间久降8),永康道交高频", "deviation": null}
+{"id": "L043", "title": "道交赔偿司法解释(二)条文解读", "category": "legal", "source": "上海二中院·新法探究", "score": 8.5, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "新法解读(司法解释刚发8.5,时间久降8),本地道交高频", "deviation": null}
 {"id": "L044", "title": "新型隐性受贿案件的适法统一", "category": "legal", "source": "上海二中院·至正理论实务", "score": 8.9, "features": {"author_tier": 1, "platform_tier": 3, "depth": 1, "relevance": 2}, "scoring_note": "刑法学研究会+上海高院指导,案例清楚+结论+分歧", "deviation": null}
 {"id": "L045", "title": "法定代表人涤除中前沿问题研讨", "category": "legal", "source": "上海二中院·尚知讲堂", "score": 8.9, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "二中院内部审判经验产出,观点交锋+整合,公司赛道", "deviation": null}
 {"id": "L046", "title": "新能源车电池品牌不符商家该担何责", "category": "legal", "source": "上海二中院·至正法官札记", "score": 8, "features": {"author_tier": 2, "platform_tier": 3, "depth": 2, "relevance": 2}, "scoring_note": "单案但紧贴热点(新能源车)", "deviation": null}
