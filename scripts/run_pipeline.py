@@ -290,10 +290,21 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
     importable = [c for c in scored
                   if c.get('score', 0) >= threshold
                   and classify_source(c) in court_sources]
+
+    # 批次内 URL 去重（同 URL 取最高分）
+    seen = {}
+    for c in importable:
+        url = c.get('url', '')
+        if url not in seen or c.get('score', 0) > seen[url].get('score', 0):
+            seen[url] = c
+    importable = list(seen.values())
+    importable.sort(key=lambda x: x.get('score', 0), reverse=True)
+
     results = import_fn(importable)
     queued = sum(1 for r in results if r.get('status') in ('imported', 'queued'))
     report["counts"]["imported"] = queued
-    log_stage(report, "import", queued=queued, total=len(results))
+    report["counts"]["ima_candidates"] = len(importable)  # 新增：IMA 候选数（用于区分周报10 vs IMA全量）
+    log_stage(report, "import", queued=queued, total=len(results), candidates_above_threshold=len(importable))
 
     # 自检
     ok, failures = self_check(report, settings)
