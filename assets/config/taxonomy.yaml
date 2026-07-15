@@ -1,7 +1,7 @@
 knowledge_base_id: YOUR_KNOWLEDGE_BASE_ID
 categories:
 - name: 婚姻家事
-  folder_id: folder_YOUR_FOLDER_ID719758498171
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 婚姻
   - 家事
@@ -21,11 +21,9 @@ categories:
   - 共同财产
   - 子女
   - 上学
-  - 婚外
-  - 赠与
   priority: 10
 - name: 公司
-  folder_id: folder_YOUR_FOLDER_ID719792053911
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 公司法
   - 股权
@@ -47,7 +45,7 @@ categories:
   - 析产
   priority: 8
 - name: 合同借贷
-  folder_id: folder_YOUR_FOLDER_ID719817217699
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 合同
   - 借贷
@@ -68,10 +66,9 @@ categories:
   - 口头承诺
   - 设备安装
   - 解除合同
-  - 借条
   priority: 8
 - name: 建筑工程
-  folder_id: folder_YOUR_FOLDER_ID76175437836595
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 以房抵债
   - 工程款
@@ -83,7 +80,7 @@ categories:
   - 转包
   priority: 9
 - name: 交通/保险
-  folder_id: folder_YOUR_FOLDER_ID719846576931
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 道交
   - 事故
@@ -99,7 +96,7 @@ categories:
   - 网约车
   priority: 9
 - name: 劳动法
-  folder_id: folder_YOUR_FOLDER_ID719867561433
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 劳动
   - 工伤
@@ -124,7 +121,7 @@ categories:
   - 闭店
   priority: 9
 - name: 刑事
-  folder_id: folder_YOUR_FOLDER_ID719888532098
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 刑事
   - 渎职
@@ -137,7 +134,7 @@ categories:
   - 非法集资
   priority: 7
 - name: 管辖
-  folder_id: folder_YOUR_FOLDER_ID720245050137
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 管辖
   - 地域
@@ -146,7 +143,7 @@ categories:
   - 主管
   priority: 6
 - name: 房地产/物权
-  folder_id: folder_YOUR_FOLDER_ID78713327302655
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 业主权利
   - 物权变动
@@ -167,7 +164,7 @@ categories:
   - 宅基地
   priority: 8
 - name: 侵权
-  folder_id: folder_YOUR_FOLDER_ID81267046069827
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 侵权
   - 受伤
@@ -186,7 +183,7 @@ categories:
   - 治疗
   priority: 8
 - name: 执行
-  folder_id: folder_YOUR_FOLDER_ID83158580718644
+  folder_id: folder_YOUR_FOLDER_ID
   keywords:
   - 执行
   - 强制执行
