@@ -285,3 +285,27 @@ legal-weekly-briefing/
 3. **IMA 独立管道**：周报精选 ≠ IMA 全量，各自优化目标不同
 4. **MP 走 Edge**：macOS SIP 限制 Chrome/Safari，Edge 路径不受保护
 5. **门禁驱动**：verify.py 17 项检查保证交付一致性，评分回归测试 ≠ 交付质量保证
+
+## 配置指南（零基础版）
+
+> 用户说「配置法律周报」时触发此段。按 Level 逐级引导，每级完成后再问是否升级。
+
+### Level 1 · 纯评分（零配置，2 分钟可用）
+用户只需说「帮我生成本周法律周报」→ Agent 自动 WebSearch → 评分排序 → 交付。
+**无需任何配置**。唯一可选：告诉 Agent 你的执业方向（如「建筑工程」），评分会自动加成 +0.3 分。
+
+### Level 2 · + IMA 知识库（需 5 分钟配置）
+**需要什么**：IMA 账号（ima.qq.com 注册，免费）+ 自建个人知识库。
+**怎么做**：① 登录 IMA → 左侧「知识库」→「新建」→ 记住名称 ② 打开 IMA 开发者设置 → 复制 `client_id` 和 `api_key` ③ 在知识库设置 → 复制 `knowledge_base_id`（一串数字）④ 把三个值告诉 Agent → Agent 写入配置 → 完成。
+**效果**：每周评分 ≥ 7.0 的文章自动入库，以后可检索。
+
+### Level 3 · + MP 自动发现（需 10 分钟配置）
+**需要什么**：个人微信公众号（订阅号即可，不需发文章）+ Edge 浏览器。
+**怎么做**：① 登录微信公众平台（mp.weixin.qq.com）→ 左侧「内容管理」→ 确认能看到已发布文章列表 ② Agent 引导关注目标公众号（建议关注至少 3 个法院公众号）③ Agent 读取 Edge cookie 中的 MP 登录态 → 自动拉取文章列表。
+**效果**：不再需要手动搜文章，Agent 自动从关注的公众号拉取。
+
+### 常见问题
+- **没有 MP 权限**：直接用 Level 1，Agent 用 WebSearch 搜索文章，效果类似
+- **IMA 注册不了**：跳过 Level 2，周报功能完全不受影响
+- **Edge vs Chrome**：macOS 下 Edge 的 cookie 路径不受 SIP 保护，Chrome 受保护读不到
+- **不想装 Python 包**：Agent 会帮你装 `pip3 install pyyaml`，一行命令
