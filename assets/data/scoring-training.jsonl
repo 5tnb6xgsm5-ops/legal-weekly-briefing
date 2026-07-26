@@ -8,12 +8,36 @@
 #   score: 石头人工评分 (1-10)
 #   features: 多维特征标签
 #     author_tier: 1=最高法法官/知名学者, 2=省高院/中院法官, 3=基层/公众号编辑, 4=媒体/机构
-#     platform_tier: 1=入库案例/最高法公报, 2=中国审判/人民法院报, 3=法院公众号品牌栏目, 4=法院公众号一般, 5=媒体/聚合站
+#     platform_tier: 1=入库案例/最高法公报, 2=中国审判/人民法院报/应用法学法库等准期刊栏目, 3=法院公众号品牌栏目, 4=法院公众号一般, 5=媒体/聚合站
+#       ※ 判定单位=栏目而非号（2026-07-26 v2.1）：同号不同栏目分级独立。如「中国应用法学」法库/法官办案心得≈tier2, 其转载资讯类推文仍 tier4。
 #     depth: 1=有裁判规则+观点交锋+结论, 2=有具体分析, 3=会议综述/新闻
 #     relevance: 1=直接对标本地实务, 2=有一���参考, 3=泛法律/泛资讯
 #     first_hand: 1=一手消息（律所/产品官方）, 0=二手中转
 #   scoring_note: 评分依据
 #   deviation: null（首次校准，后续填入AI预测分和偏差值）
+#
+# ─── 石头评分八判据 v2（2026-07-26 全量训练集审查后定稿）─────────────────
+# 栏目/标题只是初筛，每条必须单独验证"作者有没有把活干完"。栏目光环不给单篇兜底。
+#   1. 案例密度（depth 核心）：有具体案件分析(事实+说理)→高分;只抛现象/空谈概念→降
+#   2. 规范锚定（depth 之二）：回到法律规定与司法解释论证→高分;绕开法条空谈→降
+#      最高档=有入库案例支撑（准司法解释效力）
+#   3. 可操作性（relevance 真判据）：读完能拿走可直接用的裁判规则/判断标准/路径→高;
+#      只描述问题不给解法,或解法本身偶发不适用→低（选题高频≠可操作性高）
+#   4. 作者实证深度（author_tier 真判据）：不看"法官"头衔,看审级+理论论证+案例分析
+#      的实际功底。高院/中院且有深度 > 基层/低审级且论证浅。
+#      ※研讨会争议价值（2026-07-26 修正）：观点交锋类不按"有无结论"扣分——争议真实、
+#      交锋充分的不确定案件恰是实务重点(律师可影响走向),应加分而非降分。
+#   5. 框架定性（depth 前置）：好文章先定法域/体系框架(如民法vs行政法)再填内容;
+#      烂文章跳过定性直接堆材料
+#   6. 时效半衰期（relevance 调节）：前沿/技术/政策类主题随迭代贬值(如2023讲生成式AI
+#      到2026已部分失效);基础法律方法论(合同/侵权/物权)半衰期长不打折
+#   7. 地域管辖贴近度（relevance 上浮）：执业地(永康/金华)及所辖上级法院内容天然上浮
+#      ——法官固定、管辖权重合,当地裁判倾向=预判下次开庭法官的思路,非"本地光环"
+#   8. 执业视野提醒（功能定位）：评分分两用途——精读条(分数驱动进周报主体)+
+#      雷达条(执业圈外的立法/其他领域动态,低分≠消失,进周报"其他领域速览"栏防闭门造车)
+# 应用实例(同栏目分化): L055 建设用地=9(判据1/2/5全满) > L056/57 方法论无案例=6.5 >
+#   L053 司法确认=6(偶发不适用) > L054 合同僵局=5.5(无案例无法条无标准);
+#   L058/59 王利明/郑曦 AI 侵权=7.8(功底深度在线但时效过时,判据6)
 {"id": "L001", "title": "最高法公布18件入库参考案例", "category": "legal", "source": "最高法", "score": 9, "features": {"author_tier": 1, "platform_tier": 1, "depth": 2, "relevance": 1}, "scoring_note": "入库案例,仅次于民法典及司法解释效力", "deviation": null}
 {"id": "L002", "title": "最高法+发改委民营经济促进法典型案例第一批8件", "category": "legal", "source": "最高法/发改委", "score": 9, "features": {"author_tier": 1, "platform_tier": 1, "depth": 2, "relevance": 1}, "scoring_note": "同入库案例,具体化案例版本", "deviation": null}
 {"id": "L003", "title": "植物新品种案件技术事实查明典型案例+工作指引", "category": "legal", "source": "最高法", "score": 9, "features": {"author_tier": 1, "platform_tier": 1, "depth": 1, "relevance": 2}, "scoring_note": "入库案例,知产细分但方法论通用", "deviation": null}
@@ -38,7 +62,7 @@
 {"id": "L022", "title": "全国人大常委会2026年度立法计划", "category": "legal", "source": "全国人大", "score": 5, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 2}, "scoring_note": "立法动态", "deviation": null}
 {"id": "L023", "title": "行政法规制定程序条例修订版7/1施行", "category": "legal", "source": "国务院", "score": 4, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 3}, "scoring_note": "行政法规,无直接办案参考", "deviation": null}
 {"id": "L024", "title": "对外投资首部行政法规7/1施行", "category": "legal", "source": "国务院/司法部", "score": 4, "features": {"author_tier": 4, "platform_tier": 5, "depth": 3, "relevance": 2}, "scoring_note": "行政法规,本地企业出海有间接参考", "deviation": null}
-{"id": "L036", "title": "涉违章建筑房屋买卖合同疑难问题研讨会", "category": "legal", "source": "上海一中院", "score": 7.2, "features": {"author_tier": 2, "platform_tier": 3, "depth": 3, "relevance": 2}, "scoring_note": "嘉宾多但无具体结论", "deviation": null}
+{"id": "L036", "title": "涉违章建筑房屋买卖合同疑难问题研讨会", "category": "legal", "source": "上海一中院", "score": 7.8, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 2}, "scoring_note": "判据4修正:观点交锋类研讨会不按无结论扣分——争议真实交锋充分的不确定案件是实务重点,律师可影响走向(depth3→1,分数7.2→7.8)", "deviation": null}
 {"id": "L037", "title": "庞建新:公司司法解散的法律问题解析", "category": "legal", "source": "上海一中院·衡石观点", "score": 9, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "标杆案例,法官署名+品牌栏目+具体结论", "deviation": null}
 {"id": "L038", "title": "期房楼梯间货不对板购房者有权要求赔偿", "category": "legal", "source": "上海一中院", "score": 7.8, "features": {"author_tier": 3, "platform_tier": 4, "depth": 2, "relevance": 2}, "scoring_note": "民生类非重大疑难,接近8但不到8", "deviation": null}
 {"id": "L039", "title": "涉危害税收征管刑事案件法律适用", "category": "legal", "source": "上海一中院·人民法院报", "score": 8.9, "features": {"author_tier": 2, "platform_tier": 2, "depth": 1, "relevance": 2}, "scoring_note": "人民法院报来源+案例+共识+分歧,接近9", "deviation": null}
@@ -66,7 +90,7 @@
 {"id": "L047", "title": "英诺赛科vs英飞凌氮化镓临时禁令", "category": "legal", "source": "最高法知产法庭", "score": 8.4, "features": {"author_tier": 1, "platform_tier": 3, "depth": 1, "relevance": 2}, "scoring_note": "最高法行为保全,重要性高但知产非主攻方向", "deviation": 0.5}
 {"id": "L048", "title": "最高法6件环境资源审判服务保障民生典型案例", "category": "legal", "source": "最高法", "score": 7.5, "features": {"author_tier": 1, "platform_tier": 2, "depth": 2, "relevance": 2}, "scoring_note": "宣传为主,无具体案例分析", "deviation": 0.7}
 {"id": "L049", "title": "最高检8件文物和文化遗产司法保护典型案例", "category": "legal", "source": "最高检", "score": 8, "features": {"author_tier": 1, "platform_tier": 2, "depth": 2, "relevance": 2}, "scoring_note": "有具体典型案例,非纯宣传", "deviation": -1.6}
-{"id": "L050", "title": "矿产资源法实施条例6月15日起施行", "category": "legal", "source": "国务院", "score": 8, "features": {"author_tier": 4, "platform_tier": 1, "depth": 3, "relevance": 3}, "scoring_note": "法律法规更新基础分8,非主攻方向不加减", "deviation": -3.4}
+{"id": "L050", "title": "矿产资源法实施条例6月15日起施行", "category": "legal", "source": "国务院", "score": 6.5, "features": {"author_tier": 4, "platform_tier": 1, "depth": 3, "relevance": 3}, "scoring_note": "判据8:非主攻方向法规更新,降精读权重(8→6.5)但保留雷达区——执业视野提醒,不进精读不消失", "deviation": -3.4}
 {"id": "L051", "title": "上海一中院服刑人员特殊工种提前退休行政案件", "category": "legal", "source": "上海一中院公众号", "score": 8.7, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "一中院深度类型化分析,19处参考文献+入库案例引用,自动采信", "deviation": null}
 {"id": "L052", "title": "上海二中院以房抵债协议未履行原债权不消灭", "category": "legal", "source": "上海二中院·至正-法官札记", "score": 8.7, "features": {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 1}, "scoring_note": "新债清偿vs债的更改区分,合同高频场景,自动采信", "deviation": null}
 {"title": "TR CoCounsel Next Gen", "type": "ai-legal", "features": {"first_hand": 1, "depth": 1, "relevance": 2, "signal_strength": 2, "domestic_relevance": 0}, "predicted": 9.5, "manual": 8.0, "deviation": 1.5}
@@ -76,3 +100,11 @@
 {"title": "AL: Platform vs Specialist Debate（JUNE创始人）", "type": "ai-legal", "features": {"first_hand": 1, "depth": 2, "relevance": 2, "signal_strength": 2, "domestic_relevance": 0}, "predicted": 6.3, "manual": 8.0, "deviation": -1.7}
 {"title": "AL: TR CTO DeepJudge+AI采用调查（slow+chaotic）", "type": "ai-legal", "features": {"first_hand": 1, "depth": 1, "relevance": 1, "signal_strength": 2, "domestic_relevance": 0}, "predicted": 8.8, "manual": 8.0, "deviation": 0.8}
 {"title": "Bloomberg: Build vs Buy AI at Big Law（Kirkland $500M）", "type": "ai-legal", "features": {"first_hand": 1, "depth": 1, "relevance": 1, "signal_strength": 1, "domestic_relevance": 0}, "predicted": 8.8, "manual": 8.5, "deviation": 0.3}
+{"id": "L053", "title": "刘丽娟：司法确认案件纠错的实操困境与完善路径（法官办案心得）", "category": "legal", "source": "中国应用法学·法官办案心得", "score": 6, "features": {"author_tier": 3, "platform_tier": 2, "depth": 2, "relevance": 3}, "scoring_note": "石头核:长春区院四级法官(author3);司法确认经多重审核,纠错仅偶发,可适用性低(relevance3);有问题意识但无具体纠错路径(depth2)。栏目标杆但内容撑不起", "deviation": null}
+{"id": "L054", "title": "闫婉红、黄婷：合同僵局案件中司法终止规则的审查路径（法官办案心得）", "category": "legal", "source": "中国应用法学·法官办案心得", "score": 5.5, "features": {"author_tier": 3, "platform_tier": 2, "depth": 3, "relevance": 2}, "scoring_note": "石头核:审级低(author3);无具体案例/未回到合同解除法条与司法解释/未提取可操作判断标准,仅抛现象(depth3);选题高频但文章没给到可用内容(relevance2)。选题大内容空,比L053更低", "deviation": null}
+{"id": "L055", "title": "曾建彬：国有建设用地使用权出让合同纠纷的审理思路（法官办案心得）", "category": "legal", "source": "中国应用法学·法官办案心得", "score": 9, "features": {"author_tier": 2, "platform_tier": 2, "depth": 1, "relevance": 1}, "scoring_note": "石头核:范例级。开篇先做民法vs行政法框架定性(判据5),再沿滞纳金退还/出让金返还利息/印花税契税三争议焦点逐个回答,有法条+入库案例(depth1),建工本地高频(relevance1),作者体系功底够中院以上(author2)", "deviation": null}
+{"id": "L056", "title": "闫志：临时施工队人身损害案件的法律关系认定与责任承担（法官办案心得）", "category": "legal", "source": "中国应用法学·法官办案心得", "score": 6.5, "features": {"author_tier": 2, "platform_tier": 2, "depth": 2, "relevance": 2}, "scoring_note": "石头核:只给方法论,无具体案例分析(depth2)。选题高频(relevance本该1)但没给可操作分析,实操用不上(relevance2)。内容一般未点功底问题(author2)", "deviation": null}
+{"id": "L057", "title": "杨丽霞、李星谕：合同部分履行情形下定金罚则的比例适用（法官办案心得）", "category": "legal", "source": "中国应用法学·法官办案心得", "score": 6.5, "features": {"author_tier": 2, "platform_tier": 2, "depth": 2, "relevance": 2}, "scoring_note": "石头核:同L056,只给方法论,完全没结合具体案例分析(depth2/relevance2)。定金罚则选题本高频但无可操作内容", "deviation": null}
+{"id": "L058", "title": "王利明：生成式人工智能侵权的法律应对（高端论坛·关注人工智能）", "category": "legal", "source": "中国应用法学·高端论坛", "score": 7.8, "features": {"author_tier": 1, "platform_tier": 2, "depth": 1, "relevance": 3}, "scoring_note": "石头核:理论功底认可(author1/depth1),但2023年第5期文章,到2026.7生成式AI已迭代到智能体时代,内容部分失效——前沿/技术类主题时效半衰期短(relevance3)。质量高但当下用不上", "deviation": null}
+{"id": "L059", "title": "郑曦：生成式人工智能在司法中的运用——前景、风险与规制（专题策划）", "category": "legal", "source": "中国应用法学·专题策划", "score": 7.8, "features": {"author_tier": 1, "platform_tier": 2, "depth": 1, "relevance": 3}, "scoring_note": "石头核:同L058评价。学者功底认可(author1/depth1),但AI技术主题时效半衰期短,到2026.7内容部分失效(relevance3)", "deviation": null}
+{"id": "L060", "title": "最高法等七部门联合印发《关于在未成年人司法保护工作中充分发挥银发力量的意见》", "category": "legal", "source": "中国应用法学·资讯转载", "score": 5, "features": {"author_tier": 4, "platform_tier": 4, "depth": 3, "relevance": 3}, "scoring_note": "资讯类转载,与普通公众号无差别——同号栏目分级反例", "deviation": null}

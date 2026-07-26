@@ -257,7 +257,8 @@ python3 scripts/verify.py
 
 | 文件 | 内容 |
 |------|------|
-| [`references/feature-guide.md`](references/feature-guide.md) | 特征标注速查 + 训练数据替换指引 |
+| [`references/feature-guide.md`](references/feature-guide.md) | 特征标注速查 + 训练数据替换指引 + 石头评分八判据（v2.0） |
+| [`references/评分体系维护指南.md`](references/评分体系维护指南.md) | 评分标准怎么来（人机协作标注法）+ 加新号/校准操作清单 |
 | [`references/adaptation-wizard.md`](references/adaptation-wizard.md) | 适配向导 4 问流程（Agent 话术 + 分支逻辑） |
 | [`references/ima-level2-guide.md`](references/ima-level2-guide.md) | IMA Level 2 完整指南（接入链路 + 分类规则 + 踩坑表） |
 | [`references/ima-pitfalls.md`](references/ima-pitfalls.md) | IMA 接入踩坑卡（7 坑速查 + 接入链路图） |
@@ -275,7 +276,7 @@ legal-weekly-briefing/
 ├── scripts/                         ← 评分引擎 + 流水线 + 渲染 + 验证
 ├── assets/config/                   ← settings.yaml / sources.yaml / taxonomy.yaml
 ├── assets/data/                     ← 训练样本 + 回归用例
-└── references/                      ← 详细指南（7 个文件）
+└── references/                      ← 详细指南（8 个文件）
 ```
 
 ## Rationalizations

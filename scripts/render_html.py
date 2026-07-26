@@ -146,11 +146,35 @@ TEMPLATE = """<!DOCTYPE html>
     font-weight: 600;
     color: var(--text);
   }}
+  .section-head.radar {{ border-color: var(--divider); }}
   .section-head .section-en {{
     font-size: 12px;
     color: var(--text-tertiary);
     margin-left: auto;
   }}
+  /* 雷达区（其他领域速览）：轻量列表，不抢精读区视觉权重 */
+  .radar-list {{ list-style: none; padding: 0; margin: 0; }}
+  .radar-item {{
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }}
+  .radar-item:last-child {{ border-bottom: none; }}
+  .radar-score {{
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    min-width: 30px;
+  }}
+  .radar-title a {{ color: var(--text); text-decoration: none; }}
+  .radar-title a:hover {{ color: var(--accent-legal); }}
+  .radar-source {{ margin-left: auto; flex-shrink: 0; font-size: 12px; color: var(--text-tertiary); }}
+  .radar-note {{ font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; }}
   .card {{
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -346,6 +370,18 @@ TEMPLATE = """<!DOCTYPE html>
     {legal_cards}
   </div>
 
+  <div class="section">
+    <div class="section-head radar">
+      <span class="section-num">03</span>
+      <span class="section-title">其他领域速览</span>
+      <span class="section-en">Radar</span>
+    </div>
+    <div class="radar-note">执业圈外的立法与其他领域动态——不进精读，但值得知道发生了什么。</div>
+    <ul class="radar-list">
+{radar_items}
+    </ul>
+  </div>
+
 </div>
 
 <div class="footer">
@@ -488,6 +524,25 @@ def render_card(article: dict) -> str:
     )
 
 
+def render_radar_item(article: dict) -> str:
+    """渲染雷达区单条（轻量列表项）。"""
+    score = article.get('score', 0)
+    score_str = f"{score:.1f}" if isinstance(score, (int, float)) else str(score)
+    source = article.get('source') or article.get('source_name', '')
+    return (
+        '      <li class="radar-item">'
+        f'<span class="radar-score">{score_str}</span>'
+        f'<span class="radar-title"><a href="{article.get("url", "#")}" target="_blank">'
+        f'{article.get("title", "(无标题)")}</a></span>'
+        f'<span class="radar-source">{source}</span>'
+        '</li>'
+    )
+
+
+# 雷达区分流阈值：低于此分的条目不进精读，进"其他领域速览"（判据8·执业视野提醒）
+RADAR_SCORE_CEILING = 7.0
+
+
 def render_html(articles: list[dict], report_date: str = None) -> str:
     """渲染完整 HTML。"""
     if report_date is None:
@@ -499,6 +554,19 @@ def render_html(articles: list[dict], report_date: str = None) -> str:
     ai_cards = '\n'.join(render_card(a) for a in ai_articles[:3])
     legal_cards = '\n'.join(render_card(a) for a in legal_articles[:7])
 
+    # 雷达区（判据8·执业视野提醒）：legal 类中未进精读前7的 + 分数低于阈值的条目
+    featured_urls = {a.get('url') for a in legal_articles[:7]}
+    radar_pool = []
+    for a in legal_articles:
+        s = a.get('score', 10)
+        is_low = isinstance(s, (int, float)) and s < RADAR_SCORE_CEILING
+        # 未进精读区、或分数低于雷达阈值 → 进雷达区（去重）
+        if (a.get('url') not in featured_urls or is_low) and a not in radar_pool:
+            radar_pool.append(a)
+    radar_items = '\n'.join(render_radar_item(a) for a in radar_pool[:8])
+    if not radar_items:
+        radar_items = '      <li class="radar-item"><span class="radar-title" style="color:var(--text-tertiary);">本期无其他领域动态</span></li>'
+
     vol_date = date.today().strftime('%Y.%m.%d')
 
     return TEMPLATE.format(
@@ -508,6 +576,7 @@ def render_html(articles: list[dict], report_date: str = None) -> str:
         legal_count=len(legal_articles[:7]),
         ai_cards=ai_cards,
         legal_cards=legal_cards,
+        radar_items=radar_items,
         vol_date=vol_date,
     )
 
