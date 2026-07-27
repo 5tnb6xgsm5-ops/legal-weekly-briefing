@@ -140,7 +140,14 @@ legal-weekly-briefing/
 │       ├── scoring-training.jsonl  ← 62 条人工标注训练集
 │       └── test-prompts.json       ← verify.py 使用的回归样例
 └── references/
-    └── feature-guide.md         ← 特征标注速查（4 维度取值定义 + 示例）
+    ├── feature-guide.md            ← 特征标注速查 + 石头评分八判据（v2.0）
+    ├── 评分体系维护指南.md          ← 评分标准维护 + 加新号/校准操作清单
+    ├── adaptation-wizard.md        ← 适配向导 4 问流程
+    ├── ima-level2-guide.md         ← IMA Level 2 完整指南
+    ├── ima-pitfalls.md             ← IMA 接入踩坑卡
+    ├── mp-setup-guide.md           ← MP 自动发现完整配置
+    ├── delivery-gate.md            ← 交付门禁卡（17 项核查）
+    └── automation-setup.md         ← 自动化调度配置
 ```
 
 ## 验证与测试
