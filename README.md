@@ -4,7 +4,7 @@
 
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-compatible-22c55e)](https://docs.anthropic.com/en/docs/claude-code/skills)
 [![Level 1](https://img.shields.io/badge/Level%201-zero--deps-blue)](scripts/scoring_engine.py)
-[![MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CC BY-SA 4.0](https://img.shields.io/badge/license-CC%20BY--SA%204.0-green.svg)](LICENSE)
 [![community](https://img.shields.io/badge/community-open%20source-7c5e3e)](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing)
 
 > [查看 Demo 周报效果](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/blob/main/assets/showcase/demo-weekly.png)
@@ -167,4 +167,4 @@ PYTHONPATH=scripts python3 scripts/verify.py
 
 ## License
 
-MIT —— 随便改，随便发，注明出处就行。
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) —— 可自由共享、演绎（含商业用途），须署名并相同方式共享。
