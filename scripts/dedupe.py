@@ -25,12 +25,22 @@ def normalize_title(title):
 
 
 def canonical_url(url):
-    """URL 规范化：去参数、去 trailing slash、统一 scheme。"""
+    """URL 规范化：去 fragment、统一 scheme。微信 MP 链接保留关键查询参数。"""
     if not url:
         return ""
-    u = url.split('?')[0].split('#')[0]
-    u = u.rstrip('/')
-    return u.lower()
+    u = url.split('#')[0]
+    u = u.rstrip('/').lower()
+    # 微信 MP 链接：保留 __biz/mid/idx/sn（参数区分不同文章）
+    if 'mp.weixin.qq.com' in u and '?' in url:
+        params = url.split('?')[1].split('#')[0]
+        # 提取关键参数
+        key_parts = []
+        for p in params.split('&'):
+            if p.startswith('__biz=') or p.startswith('mid=') or p.startswith('idx=') or p.startswith('sn='):
+                key_parts.append(p.split('=')[0] + '=' + p.split('=')[1].split('&')[0])
+        if key_parts:
+            u = u + '?' + '&'.join(sorted(key_parts))
+    return u
 
 
 def similarity(a, b):
