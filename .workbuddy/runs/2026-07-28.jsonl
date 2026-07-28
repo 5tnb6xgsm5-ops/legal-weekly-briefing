@@ -1,0 +1,102 @@
+{"ts": 1785213949.253888, "stage": "discover", "count": 14, "mode": "from_file"}
+{"ts": 1785213949.2561889, "stage": "dedupe", "before": 14, "after": 14}
+{"ts": 1785213949.285221, "stage": "score", "count": 14}
+{"ts": 1785213949.287481, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785213949.31865, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785213949.353652, "stage": "import", "queued": 6, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785214096.844918, "stage": "discover", "count": 14, "mode": "from_file"}
+{"ts": 1785214096.8472629, "stage": "dedupe", "before": 14, "after": 14}
+{"ts": 1785214096.86582, "stage": "score", "count": 14}
+{"ts": 1785214096.8687758, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785214096.8819041, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785214096.891718, "stage": "import", "queued": 0, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785214107.323872, "stage": "discover", "count": 14, "mode": "from_file"}
+{"ts": 1785214107.325829, "stage": "dedupe", "before": 14, "after": 14}
+{"ts": 1785214107.3432078, "stage": "score", "count": 14}
+{"ts": 1785214107.345373, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785214107.356716, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785214107.365846, "stage": "import", "queued": 0, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785214456.6818728, "stage": "discover", "count": 5, "mode": "from_file"}
+{"ts": 1785214456.6839318, "stage": "dedupe", "before": 5, "after": 5}
+{"ts": 1785214456.690881, "stage": "score", "count": 5}
+{"ts": 1785214456.69286, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785214456.6988, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785214456.7054012, "stage": "import", "queued": 0, "total": 3, "candidates_above_threshold": 3}
+{"ts": 1785214724.136657, "stage": "discover", "count": 14, "mode": "from_file"}
+{"ts": 1785214724.1387892, "stage": "dedupe", "before": 14, "after": 14}
+{"ts": 1785214724.159308, "stage": "score", "count": 14}
+{"ts": 1785214724.163388, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785214724.179391, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785214724.189333, "stage": "import", "queued": 0, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785215123.7356522, "stage": "discover", "count": 14, "mode": "from_file"}
+{"ts": 1785215123.7381508, "stage": "dedupe", "before": 14, "after": 14}
+{"ts": 1785215123.760779, "stage": "score", "count": 14}
+{"ts": 1785215123.762919, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785215123.7796109, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785215123.802998, "stage": "import", "queued": 6, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785215721.359382, "stage": "discover", "count": 14, "mode": "from_file"}
+{"ts": 1785215721.361794, "stage": "dedupe", "before": 14, "after": 14}
+{"ts": 1785215721.38059, "stage": "score", "count": 14}
+{"ts": 1785215721.382735, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785215721.394531, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785215721.420243, "stage": "import", "queued": 6, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785215829.2161448, "stage": "discover", "count": 13, "mode": "from_file"}
+{"ts": 1785215829.218715, "stage": "dedupe", "before": 13, "after": 13}
+{"ts": 1785215829.235036, "stage": "score", "count": 13}
+{"ts": 1785215829.2371058, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785215829.247065, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785215829.2705762, "stage": "import", "queued": 6, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785215996.925357, "stage": "discover", "count": 13, "mode": "from_file"}
+{"ts": 1785215996.928128, "stage": "dedupe", "before": 13, "after": 13}
+{"ts": 1785215996.962788, "stage": "score", "count": 13}
+{"ts": 1785215996.9673789, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785215996.984082, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785215997.011452, "stage": "import", "queued": 6, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785216035.08505, "stage": "discover", "count": 13, "mode": "from_file"}
+{"ts": 1785216035.0873349, "stage": "dedupe", "before": 13, "after": 13}
+{"ts": 1785216035.105199, "stage": "score", "count": 13}
+{"ts": 1785216035.1075242, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216035.118214, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216035.127789, "stage": "import", "queued": 0, "total": 9, "candidates_above_threshold": 9}
+{"ts": 1785216471.9597352, "stage": "discover", "count": 13, "mode": "from_file"}
+{"ts": 1785216471.9634151, "stage": "dedupe", "before": 13, "after": 4}
+{"ts": 1785216471.971974, "stage": "score", "count": 4}
+{"ts": 1785216471.9752471, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216471.979506, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216471.98511, "stage": "import", "queued": 0, "total": 1, "candidates_above_threshold": 1}
+{"ts": 1785216502.9283578, "stage": "discover", "count": 13, "mode": "from_file"}
+{"ts": 1785216502.933099, "stage": "dedupe", "before": 13, "after": 13}
+{"ts": 1785216502.9543161, "stage": "score", "count": 13}
+{"ts": 1785216502.957309, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216502.972229, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216503.01754, "stage": "import", "queued": 7, "total": 10, "candidates_above_threshold": 10}
+{"ts": 1785216586.337774, "stage": "discover", "count": 18, "mode": "from_file"}
+{"ts": 1785216586.3439429, "stage": "dedupe", "before": 18, "after": 18}
+{"ts": 1785216586.387968, "stage": "score", "count": 18}
+{"ts": 1785216586.391903, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216586.4177752, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216586.4650428, "stage": "import", "queued": 7, "total": 10, "candidates_above_threshold": 10}
+{"ts": 1785216685.6266959, "stage": "discover", "count": 20, "mode": "from_file"}
+{"ts": 1785216685.631059, "stage": "dedupe", "before": 20, "after": 20}
+{"ts": 1785216685.6601138, "stage": "score", "count": 20}
+{"ts": 1785216685.662498, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216685.683033, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216685.7202759, "stage": "import", "queued": 7, "total": 12, "candidates_above_threshold": 12}
+{"ts": 1785216841.745866, "stage": "discover", "count": 20, "mode": "from_file"}
+{"ts": 1785216841.749923, "stage": "dedupe", "before": 20, "after": 20}
+{"ts": 1785216841.7809448, "stage": "score", "count": 20}
+{"ts": 1785216841.783788, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216841.8052201, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216841.841343, "stage": "import", "queued": 7, "total": 12, "candidates_above_threshold": 12}
+{"ts": 1785216933.5394251, "stage": "discover", "count": 18, "mode": "from_file"}
+{"ts": 1785216933.5435698, "stage": "dedupe", "before": 18, "after": 18}
+{"ts": 1785216933.570189, "stage": "score", "count": 18}
+{"ts": 1785216933.573589, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216933.593079, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216933.626282, "stage": "import", "queued": 6, "total": 10, "candidates_above_threshold": 10}
+{"ts": 1785216952.2894988, "stage": "discover", "count": 18, "mode": "from_file"}
+{"ts": 1785216952.294931, "stage": "dedupe", "before": 18, "after": 18}
+{"ts": 1785216952.3222342, "stage": "score", "count": 18}
+{"ts": 1785216952.324703, "stage": "write_report", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.md"}
+{"ts": 1785216952.343078, "stage": "render_html", "path": "/Users/wu22/.workbuddy/skills/legal-weekly-briefing/周报_2026-07-28.html"}
+{"ts": 1785216952.3726861, "stage": "import", "queued": 6, "total": 10, "candidates_above_threshold": 10}
