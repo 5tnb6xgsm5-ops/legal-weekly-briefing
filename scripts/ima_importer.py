@@ -5,9 +5,7 @@
 - 从 config/taxonomy.yaml 解析领域 → folder_id
 - 导入前查重（imported_cache.jsonl，url 为键）
 - 分类决策后写入 ima_import_queue.jsonl（待导入队列）
-- 硬件失败（IO/磁盘）写入 failed_import.jsonl + 指数退避重试
-- 分类失败（keywords+heuristic 均不命中）写入 needs_llm_classify.jsonl
-  由外层 Agent 批量 LLM 分类后回填 ima_import_queue.jsonl
+- 失败写入 failed_import.jsonl + 指数退避重试
 - 多领域命中 → 主领域优先，副类记录
 
 设计：本模块不直接调用 IMA API。它产出"待导入队列"，由外层客户端消费：
@@ -23,12 +21,10 @@ try:
 except ImportError:
     yaml = None
 
-# 技能根目录（scripts/ 的上一级），assets/ 与 scripts/ 同级
-BASE = Path(__file__).resolve().parent.parent
-TAXONOMY = BASE / "assets" / "config" / "taxonomy.yaml"
-CACHE = BASE / "queued_cache.jsonl"  # 队列去重缓存（非 IMA 导入确认）
+BASE = Path(__file__).resolve().parent
+TAXONOMY = BASE / "config" / "taxonomy.yaml"
+CACHE = BASE / "imported_cache.jsonl"
 FAILED = BASE / "failed_import.jsonl"
-NEEDS_LLM = BASE / "needs_llm_classify.jsonl"
 
 
 def load_taxonomy():
@@ -39,13 +35,7 @@ def load_taxonomy():
 
 
 def classify(title, tags=None):
-    """返回 (primary_category, folder_id, secondary_categories)。
-
-    两层匹配：
-    1. 主关键词精确匹配（taxonomy.yaml categories 的 keywords）
-    2. 兜底推断（_heuristic_classify）：主关键词不命中时按标题语义特征推断
-    两层都不命中 → 返回 (None, uncategorized_folder_id, [])。
-    """
+    """返回 (primary_category, folder_id, secondary_categories)。无命中返回 (None, uncategorized_folder_id, [])。"""
     tax = load_taxonomy()
     if not tax:
         return None, "", []
@@ -56,13 +46,6 @@ def classify(title, tags=None):
         kw = c.get('keywords', [])
         if any(k in text for k in kw):
             matched.append(c)
-
-    # 兜底：主关键词不命中时尝试推断
-    if not matched:
-        inferred = _heuristic_classify(title, cats)
-        if inferred:
-            return inferred['name'], inferred.get('folder_id', ''), []
-
     if not matched:
         return None, tax.get('uncategorized_folder_id', ''), []
     # 主领域：priority 最高；并列取首个
@@ -70,47 +53,6 @@ def classify(title, tags=None):
     primary = matched[0]
     secondary = [c['name'] for c in matched[1:]]
     return primary['name'], primary.get('folder_id', ''), secondary
-
-
-# 兜底推断规则：当主关键词不命中时，按语义特征推断分类。
-# 每条规则: (signal_words, category_name)
-# signal_words 中任一命中标题 → 推断为该分类。
-# 规则按置信度排序，先命中先得（不回溯）。
-_HEURISTIC_RULES = [
-    # 刑事信号（优先级最高，避免误分类到其他域）
-    (['罪', '避险', '危险作业', '刑事', '诈骗', '渎职'], '刑事'),
-    # 劳动法信号
-    (['欠薪', '雇主', '打工', '工资', '工伤', '解雇', '辞退'], '劳动法'),
-    # 建筑工程信号
-    (['建工', '工程款', '施工', '分包', '转包'], '建筑工程'),
-    # 婚姻家事信号
-    (['赠与', '婚外', '离婚', '继承', '抚养', '彩礼'], '婚姻家事'),
-    # 合同借贷信号
-    (['借条', '欠条', '留置', '担保', '违约金', '定金'], '合同借贷'),
-    # 侵权信号
-    (['热射病', '受伤', '致死', '损害赔偿', '安全保障'], '侵权'),
-    # 执行信号
-    (['执行', '查封', '冻结', '拍卖', '失信'], '执行'),
-    # 房地产/物权信号
-    (['矿产资源', '拆迁', '宅基地', '不动产', '物业'], '房地产/物权'),
-    # 公司信号（最宽泛，优先级最低）
-    (['股东', '股权', '法人', '章程', '董监高', '公司'], '公司'),
-]
-
-
-def _heuristic_classify(title, categories):
-    """兜底推断：标题命中 heuristic 规则 → 返回对应 category dict。
-
-    在 categories 列表中查找 name 匹配的 category，返回其 dict（含 folder_id）。
-    无命中返回 None。
-    """
-    if not title:
-        return None
-    cat_map = {c['name']: c for c in categories}
-    for signal_words, cat_name in _HEURISTIC_RULES:
-        if any(w in title for w in signal_words):
-            return cat_map.get(cat_name)
-    return None
 
 
 def load_cache():
@@ -125,12 +67,6 @@ def save_cache(url):
         f.write(url + '\n')
 
 
-def reset_queued_cache():
-    """清空队列去重缓存 —— 当队列已确认消费（IMA 导入成功）后调用。"""
-    with open(CACHE, 'w') as f:
-        f.write('')
-
-
 def load_failed():
     if not FAILED.exists():
         return []
@@ -138,58 +74,20 @@ def load_failed():
         return [json.loads(line) for line in f if line.strip()]
 
 
-def reset_failed():
-    """清空硬件失败队列 —— 每轮 pipeline 启动时调用，避免跨轮累积。"""
-    with open(FAILED, 'w') as f:
-        f.write('')
-
-
 def save_failed(entry):
-    """追加单条硬件失败记录（IO/磁盘错误）。同一轮 pipeline 内多次调用。"""
     with open(FAILED, 'a') as f:
         f.write(json.dumps(entry, ensure_ascii=False) + '\n')
 
 
-def reset_needs_llm():
-    """清空 LLM 待分类队列 —— 每轮 pipeline 启动时调用。
-
-    保护机制：如果队列非空（上轮 Step 5 未执行），输出警告而非静默清空。
-    """
-    if NEEDS_LLM.exists() and NEEDS_LLM.stat().st_size > 0:
-        import sys
-        print(f"WARNING: needs_llm_classify.jsonl 有残留条目（上轮 Step 5 可能未执行），保留不覆盖",
-              file=sys.stderr)
-        # 不覆盖，等 Step 5 处理完再清空
-        return
-    with open(NEEDS_LLM, 'w') as f:
-        f.write('')
-
-
-def save_needs_llm(url, title, source=""):
-    """追加一条需要 LLM 兜底分类的条目。
-    
-    格式：{url, title, source, ts}
-    Agent 层读取此文件后批量 LLM 分类，结果回填 ima_import_queue.jsonl。
-    """
-    with open(NEEDS_LLM, 'a') as f:
-        f.write(json.dumps({
-            "url": url,
-            "title": title,
-            "source": source,
-            "ts": time.time()
-        }, ensure_ascii=False) + '\n')
-
-
-def import_one(url, title, source="", max_retries=3, backoff=2):
+def import_one(url, title, max_retries=3, backoff=2):
     """决定单条是否导入 IMA，并写入待导入队列。
 
-    三层分流：
-    1. 关键词 + 启发式命中 → 直接 enqueue（确定性，零延迟）
-    2. 均不命中 → 写入 needs_llm_classify.jsonl（Agent 层批量 LLM 处理）
-    3. IO/磁盘错误 → 写入 failed_import.jsonl（硬件故障）
-
     返回 dict: {url, status, folder_id, category, error}
-    status: 'queued' | 'skipped_duplicate' | 'needs_llm' | 'failed'
+    status: 'queued'（已写入待导入队列）| 'skipped_duplicate' | 'failed'
+
+    设计：本模块不直接调用 IMA API。它负责"分类决策 + 幂等查重 + 队列写出"，
+    真正的 import_urls 调用由外层（WorkBuddy MCP / 用户客户端）读取队列后执行。
+    这样 Python 模块保持可测试、不耦合 MCP 运行时，开源用户可用任意 IMA 客户端消费队列。
     """
     cache = load_cache()
     if url in cache:
@@ -197,9 +95,10 @@ def import_one(url, title, source="", max_retries=3, backoff=2):
 
     category, folder_id, secondary = classify(title)
     if not folder_id:
-        # 分类不命中 → LLM 兜底队列，不标 failed
-        save_needs_llm(url, title, source)
-        return {"url": url, "status": "needs_llm", "folder_id": "", "category": "", "error": "needs_llm_classify"}
+        # 无 folder_id（未配置兜底）-> 标失败待人工
+        entry = {"url": url, "title": title, "error": "no_folder_id", "ts": time.time()}
+        save_failed(entry)
+        return {"url": url, "status": "failed", "folder_id": "", "category": category or "", "error": "no_folder_id"}
 
     # 重试：队列写出可能因 IO 失败，退避重试
     last_err = ""
@@ -212,7 +111,6 @@ def import_one(url, title, source="", max_retries=3, backoff=2):
             last_err = str(e)
             time.sleep(backoff ** attempt)
 
-    # IO 失败 → 硬件故障队列
     entry = {"url": url, "title": title, "folder_id": folder_id, "error": last_err, "ts": time.time()}
     save_failed(entry)
     return {"url": url, "status": "failed", "folder_id": folder_id, "category": category or "", "error": last_err}
