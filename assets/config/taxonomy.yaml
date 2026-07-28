@@ -73,9 +73,6 @@ categories:
   - 留置
   - 充值
   - 打赏
-  - 损害赔偿
-  - 示范文本
-  - 最高法
   priority: 8
 - name: 建筑工程
   folder_id: folder_YOUR_FOLDER_ID
@@ -199,6 +196,7 @@ categories:
   - 近视
   - 治疗
   - 热射病
+  - 损害赔偿
   priority: 8
 - name: 执行
   folder_id: folder_YOUR_FOLDER_ID

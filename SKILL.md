@@ -171,14 +171,14 @@ python3 scripts/verify.py  # 期望: 18 通过 / 0 失败
 
 若 `needs_llm_classify.jsonl` 非空，Agent 读取该文件 → 一次性将全部待分类标题传给 LLM →
 LLM 返回分类结果 → Agent 按 taxonomy.yaml 映射 folder_id → 回填 `ima_import_queue.jsonl`。
+**分类完成后清空 `needs_llm_classify.jsonl`。**
 
 ```bash
 # Agent 检查是否有待分类队列
 wc -l needs_llm_classify.jsonl
-# 若 > 0，Agent 执行 LLM 批量分类，prompt 模板：
-#   "对以下法律文章标题按 taxonomy.yaml 的 11 个分类归类，
-#    输出 JSON: [{idx: 0, category: '公司'}, ...]"
-# 结果回填后 Agent 追加到 ima_import_queue.jsonl
+# 若 > 0，Agent 执行 LLM 批量分类
+# 分类完成后：
+> needs_llm_classify.jsonl  # 清空已处理队列
 ```
 
 ### Step 6: IMA 入库（消费队列，强制执行）
@@ -186,15 +186,19 @@ wc -l needs_llm_classify.jsonl
 流水线和 LLM 分类完成后，`ima_import_queue.jsonl` 中所有条目必须实际导入 IMA 知识库。
 
 Agent 执行：
-1. 读取 `ima_import_queue.jsonl`，去重（同 URL 保留首次）
-2. 按 `folder_id` 分组
-3. 逐组调用 ima-mcp 的 `import_urls`（knowledge_base_id + folder_id + urls[]）
-4. 输出汇总：「已入库 X 条 / 跳过重复 Y 条 / 失败 Z 条」
+1. 检查 `taxonomy.yaml` 的 `knowledge_base_id` ≠ `YOUR_KNOWLEDGE_BASE_ID`（占位符时阻断，提示用户先配置）
+2. 读取 `ima_import_queue.jsonl`，按 `folder_id` 分组
+3. 逐组调用 ima-mcp 的 `import_urls`（knowledge_base_id + folder_id + urls[]，单次 ≤10 条）
+4. 导入成功 → 调用 `reset_queued_cache()` 清空去重缓存
+5. 导入成功 → 截断 `ima_import_queue.jsonl`（消费完成，清空队列）
+6. 输出汇总：「已入库 X 条 / 跳过重复 Y 条 / 失败 Z 条」
 
 ```bash
 # Agent 读取队列 → 调用 IMA MCP
 # import_urls 单次最多 10 条 URL，超过分批
-# knowledge_base_id 从 taxonomy.yaml 读取（占位符时阻断并提示用户配置）
+# 导入完成后：
+python3 -c "import sys; sys.path.insert(0,'scripts'); from ima_importer import reset_queued_cache; reset_queued_cache()"
+> /dev/null 2>&1 ima_import_queue.jsonl  # 截断已消费队列
 ```
 
 ---
