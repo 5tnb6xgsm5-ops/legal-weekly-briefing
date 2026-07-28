@@ -60,7 +60,11 @@ output:
   # 来源多样性：同一来源在周报中最多出现的条数（0=不限制）
   max_per_source: 2
   # IMA 导入最低分数阈值（>=此分的法院公众号来源条目全量导入 IMA，不受周报条数限制）
-  ima_import_threshold: 8.0
+  # 6.5 = 雷达区显示线 = IMA 入库线，确保法规更新（如 L050 矿产资源法 6.5 分）能入库
+  ima_import_threshold: 6.5
+  # 雷达区视觉标记阈值：低于此分的 legal 条目在雷达区做低调视觉标记
+  # （不决定能否进雷达区，所有 legal 未进精读前 7 的条目都会进雷达区）
+  radar_score_ceiling: 7.0
 
 pipeline:
   # 失败重试次数
