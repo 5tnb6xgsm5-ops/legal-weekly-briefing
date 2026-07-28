@@ -539,8 +539,23 @@ def render_radar_item(article: dict) -> str:
     )
 
 
-# 雷达区分流阈值：低于此分的条目不进精读，进"其他领域速览"（判据8·执业视野提醒）
-RADAR_SCORE_CEILING = 7.0
+# 雷达区分流阈值：低于此分的条目在雷达区做低调视觉标记（判据8·执业视野提醒）
+# 值从 settings.yaml 的 output.radar_score_ceiling 读取，不再硬编码
+_RADAR_SCORE_CEILING_DEFAULT = 7.0
+
+
+def _get_radar_score_ceiling() -> float:
+    """从 settings.yaml 读取 radar_score_ceiling，缺失时回退默认值。"""
+    try:
+        import yaml
+        from pathlib import Path
+        settings_path = Path(__file__).resolve().parent.parent / "assets" / "config" / "settings.yaml"
+        if settings_path.exists():
+            cfg = yaml.safe_load(open(settings_path)) or {}
+            return float(cfg.get("output", {}).get("radar_score_ceiling", _RADAR_SCORE_CEILING_DEFAULT))
+    except Exception:
+        pass
+    return _RADAR_SCORE_CEILING_DEFAULT
 
 
 def render_html(articles: list[dict], report_date: str = None) -> str:
@@ -559,7 +574,7 @@ def render_html(articles: list[dict], report_date: str = None) -> str:
     radar_pool = []
     for a in legal_articles:
         s = a.get('score', 10)
-        is_low = isinstance(s, (int, float)) and s < RADAR_SCORE_CEILING
+        is_low = isinstance(s, (int, float)) and s < _get_radar_score_ceiling()
         # 未进精读区、或分数低于雷达阈值 → 进雷达区（去重）
         if (a.get('url') not in featured_urls or is_low) and a not in radar_pool:
             radar_pool.append(a)
