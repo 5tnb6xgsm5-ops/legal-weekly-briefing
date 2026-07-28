@@ -1,4 +1,4 @@
-knowledge_base_id: YOUR_KNOWLEDGE_BASE_ID
+knowledge_base_id:  YOUR_KNOWLEDGE_BASE_ID # 精品知识库（替换为你自己的 KB_ID）
 categories:
 - name: 婚姻家事
   folder_id: folder_YOUR_FOLDER_ID719758498171
