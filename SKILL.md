@@ -1,6 +1,6 @@
 ---
 name: 法律周报
-description: "用户说「生成法律周报」「帮我筛法院公众号文章」「法律简报」「案例入库」时触发。从法院公众号（上海一中院/二中院/山东高法等）文章中用可解释的 k-NN 评分引擎筛出 10 条精品周报，其余实务文章全量入库 IMA 知识库做 RAG。临时法律热点查询走 legal-hot，不要用本 skill。"
+description: "用户说「生成法律周报」「帮我筛法院公众号文章」「法律简报」「案例入库」时触发。从四个法院公众号（上海一中院/二中院/山东高法/中国应用法学）文章中用可解释的 k-NN 评分引擎（八判据驱动）筛出 10 条精品周报，其余实务文章全量入库 IMA 知识库做 RAG。临时法律热点查询走 legal-hot，不要用本 skill。"
 author: "社区贡献者"
 agent_created: true
 version: 2.0.0
@@ -18,7 +18,7 @@ load: on_demand
 | IMA 知识库 | 仅限用户自建个人 KB，使用前确认归属 | 不应指引订阅/加入/接受邀请非自建 KB |
 | KB_ID | 用 `YOUR_KNOWLEDGE_BASE_ID` 占位符；用户提供后先确认「是自建的吗？」再写入 | 不应提供或暗示任何具体 KB_ID（含示例） |
 | HTML 交付 | 仅用 `render_html.py` 渲染（`#f8f7f5` / `#1a1a2e` 浅色简报风） | 不应自造深色翻页幻灯片或其他替代样式 |
-| 交付验证 | 每次修改后必须跑 `python3 scripts/verify.py`，17 项全通过 | 不应跳过验证或仅凭人眼判断 |
+| 交付验证 | 每次修改后必须跑 `python3 scripts/verify.py`，18 项全通过 | 不应跳过验证或仅凭人眼判断 |
 | 候选数据 | 每条候选必须含 `abstract` + `recommend` | 不应构建缺少必填字段的 candidates.jsonl |
 | session.json | 仅本地使用，`.gitignore` 已排除 | 不应分享/提交到 Git/发送到任何服务器 |
 | 样式修改 | 需要改样式时先问用户确认 | 不应擅自改动配色/布局/交互 |
@@ -28,12 +28,13 @@ load: on_demand
 
 ## 第一性原理
 
-同一批法院公众号文章，走两条管道分流：
+同一批法院公众号文章，走三层分流：
 
-> **周报管道**：k-NN 评分引擎挑 10 条精品 → 律师主动阅读
-> **知识库管道**：全量实务文章入库 IMA → 检索增强（RAG）
+> **Tier 1 · 精读区**：k-NN 评分引擎挑 10 条精品 → 律师主动阅读
+> **Tier 2 · 雷达区 + IMA**：低分≠消失，legal 未进精读的前 8 条进「其他领域速览」（雷达区）防闭门造车；score ≥ 6.5 法院源条目全量入库 IMA 做 RAG
+> **Tier 3 · 噪音**：非 legal 源 + 非 court 源 + 未进 AI 精读的条目，自然落选
 
-周报解决"本周重点看什么"，知识库解决"以后能找到什么"。两条管道共享内容发现层，在评分环节分叉。
+精读解决"本周重点看什么"，雷达区解决"执业圈外还有什么在动"，IMA 解决"以后能找到什么"。三层共享内容发现层，在评分环节分叉。
 
 **核心交付模式**：「配置一次，每周自动推送」——依赖外部调度层（WorkBuddy Automation / GitHub Actions cron）定时触发。
 
@@ -52,7 +53,7 @@ Level 2 · + IMA 知识库（需 IMA 账号）
   └─ Level 1 + ima_importer.py → 分类 → import_urls → 全量入库
 
 Level 3 · + MP 自动发现（需 MP 后台权限）
-  └─ Level 1 + wechat-ocr-research → MP 后台拉取三账号文章
+  └─ Level 1 + wechat-ocr-research → MP 后台拉取四账号文章
 ```
 
 ---
@@ -76,6 +77,46 @@ python3 scripts/demo.py
 
 ---
 
+## 标准执行流程（四号 MP → 八判据评分 → 三层交付）
+
+> 2026-07-28 确立的标准执行链路。每次真实周报按此流程：Session → 拉取 → 构建 → 评分 → 交付。
+
+### Step 1: MP Session 就绪
+
+```bash
+# 方式 A：从 Edge 同步 cookies（推荐）
+python3 scripts/refresh_session_from_edge.py
+
+# 方式 B：重新扫码
+python3 scripts/wechat_mp_reader.py session login-start
+```
+
+### Step 2: 拉取四号文章（每号最近 5 篇）
+
+```bash
+# 通过 appmsg API 拉取（需有效 session）：
+#   山东高法 (MzA5MDAxMjk5Ng==)
+#   上海一中院 (MjM5MjkwMDkxMA==)
+#   上海二中院 (MzA4MzY3NjMxNw==)
+#   中国应用法学 (MzU5NDcxMjc4Ng==)
+```
+
+### Step 3: 构建 candidates.jsonl（八判据特征 + MP digest + 律师视角推荐理由）
+
+- **特征标注**：按 `feature-guide.md` 八判据逐条赋值（判据1案例密度→depth，判据4作者实证→author_tier，判据7地域贴近→relevance上浮等）
+- **abstract**：取 MP API 返回的 `digest` 字段（微信文章原文前段节选）
+- **recommend**：律师视角的实务价值判断（≥30字，说清楚「对律师有什么用」）
+- **栏目分级**：中国应用法学【法官办案心得】platform_tier=2，资讯转载=4
+
+### Step 4: 运行流水线 + 验证
+
+```bash
+PYTHONPATH=scripts python3 scripts/run_pipeline.py candidates.jsonl
+python3 scripts/verify.py  # 期望: 18 通过 / 0 失败
+```
+
+---
+
 ## 适配向导（4 问流程）
 
 > 用户表达「想配置法律周报」意图时，Agent 必须主动引导。完整话术和分支逻辑见 `references/adaptation-wizard.md`。
@@ -83,7 +124,7 @@ python3 scripts/demo.py
 | 问次 | 主题 | 决定 | Agent 关键动作 |
 |------|------|------|--------------|
 | 1 | 执业方向 | `interest_keywords` + taxonomy priority | 写入 settings.yaml；告知「兴趣赛道加成 +0.3 分」 |
-| 2 | 关注公众号 | `sources.yaml` | 保留三个示范法院默认；追加用户指定的公众号 |
+| 2 | 关注公众号 | `sources.yaml` | 保留四个示范公众号默认；追加用户指定的公众号 |
 | 3 | MP 后台权限 | 是否启用 Level 3 | 有 → 引导 MP 配置（见 `references/mp-setup-guide.md`）；无 → 保持 WebSearch 模式 |
 | 4 | IMA 知识库 | 是否启用 Level 2 | 有 → 先确认「自建个人 KB」（铁律检查）→ 引导获取 KB_ID/folder_id/API 凭证；无 → 保持 Level 1 |
 
@@ -151,7 +192,7 @@ depth=2  个案叙事/案例选登（有案例事实+裁判要旨，但偏个案
 
 ### 已知限制
 
-- k-NN 依赖训练集质量。内置 62 条偏重特定执业方向，开源用户需按自己领域重新标注
+- k-NN 依赖训练集质量。内置 110 条偏重特定执业方向，开源用户需按自己领域重新标注
 - 特征维度有限（4 维），无法区分新颖性/时效性/写作质量（有意设计取舍）
 - 兴趣赛道加成（+0.3）硬编码，在 `settings.yaml` 的 `interest_keywords` 中配置
 
@@ -167,9 +208,11 @@ depth=2  个案叙事/案例选登（有案例事实+裁判要旨，但偏个案
 
 **工作原理**：`run_pipeline.py` 产出 `ima_import_queue.jsonl` → 按 `taxonomy.yaml` 关键词分配 folder_id → 调用 IMA OpenAPI `import_urls` 入库。
 
-**周报 vs IMA 入库**（两条独立管道）：
-- 周报：diversity-aware 选 10 条，同源≤2
-- IMA：score ≥ 8.0 法院源条目全部入库，不限条数
+**周报 vs IMA vs 雷达区**（三层分流）：
+- **精读区（Tier 1）**：diversity-aware 选 10 条，同源≤2，进 MD 周报 + HTML 卡片区
+- **IMA 入库（Tier 2 之一）**：score ≥ 6.5 法院源条目全部入库，不限条数
+- **雷达区（Tier 2 之二）**：legal 未进精读前 7 的条目进 HTML「其他领域速览」（最多 8 条，低分条做低调视觉标记）
+- **噪音（Tier 3）**：非 legal 源 + 非 court 源 + 未进 AI 精读的条目，不显示不进库
 
 **分类规则**：10 个分类，按优先级排序——专业领域（建筑工程/劳动法/交通事故 priority=9）高于通用兜底（合同借贷 priority=8），避免"劳动合同"被"合同"误捕获。
 
@@ -193,13 +236,16 @@ depth=2  个案叙事/案例选登（有案例事实+裁判要旨，但偏个案
 
 标题: `# 法律周报 2026年X月X日-X月X日 · 第N期`
 
-双板块（按评分降序）：
+三板块（按评分降序）：
 ```
 ## AI + 法律
 【9.5】标题 | URL | 描述（含信号级别）
 
 ## 纯法律
 【9.0】标题 | URL | 描述（含领域标签）
+
+## 其他领域速览（雷达区）
+【6.5】标题 | URL | 描述（执业圈外动态，低分≠消失）
 ```
 
 页脚：引擎版本 + MP session 状态 + IMA 导入统计 + 排除清单。
@@ -218,10 +264,11 @@ depth=2  个案叙事/案例选登（有案例事实+裁判要旨，但偏个案
 | G4 | `demo.py` 候选含 `abstract`/`recommend` | P0 | 示范数据不完整即阻塞 |
 | G5 | `run_pipeline.py` 含 HTML 渲染步骤 | P0 | 流水线缺步骤即阻塞 |
 | G6 | `taxonomy.yaml` 的 `knowledge_base_id` 非作者/他人 KB | P0 | 作者 KB → 阻断；占位符 → 警告 |
+| G7 | `render_html.py` 的 `radar_score_ceiling` 从 `settings.yaml` 读取 | P0 | 硬编码 → 阻塞 |
 
 ```bash
 python3 scripts/verify.py
-# 期望: "17 通过 / 0 失败" → exit code 0
+# 期望: "18 通过 / 0 失败" → exit code 0
 ```
 
 ---
@@ -264,7 +311,7 @@ python3 scripts/verify.py
 | [`references/ima-level2-guide.md`](references/ima-level2-guide.md) | IMA Level 2 完整指南（接入链路 + 分类规则 + 踩坑表） |
 | [`references/ima-pitfalls.md`](references/ima-pitfalls.md) | IMA 接入踩坑卡（7 坑速查 + 接入链路图） |
 | [`references/mp-setup-guide.md`](references/mp-setup-guide.md) | MP 自动发现完整配置（8 步 + 常见问题 + 替代方案） |
-| [`references/delivery-gate.md`](references/delivery-gate.md) | 交付门禁卡（17 项核查 + 铁律 + 违规案例） |
+| [`references/delivery-gate.md`](references/delivery-gate.md) | 交付门禁卡（18 项核查 + 铁律 + 违规案例） |
 | [`references/automation-setup.md`](references/automation-setup.md) | 自动化调度配置（WorkBuddy / GitHub / cron） |
 
 ---
@@ -286,7 +333,7 @@ legal-weekly-briefing/
 2. **k-NN 选型**：4 维特征向量可解释，训练数据可替换，降级不崩
 3. **IMA 独立管道**：周报精选 ≠ IMA 全量，各自优化目标不同
 4. **MP 走 Edge**：macOS SIP 限制 Chrome/Safari，Edge 路径不受保护
-5. **门禁驱动**：verify.py 17 项检查保证交付一致性，评分回归测试 ≠ 交付质量保证
+5. **门禁驱动**：verify.py 18 项检查保证交付一致性，评分回归测试 ≠ 交付质量保证
 
 ## 配置指南（零基础版）
 
@@ -298,12 +345,12 @@ legal-weekly-briefing/
 
 ### Level 2 · + IMA 知识库（需 5 分钟配置）
 **需要什么**：IMA 账号（ima.qq.com 注册，免费）+ 自建个人知识库。
-**怎么做**：① 登录 IMA → 左侧「知识库」→「新建」→ 记住名称 ② 打开 IMA 开发者设置 → 复制 `client_id` 和 `api_key` ③ 在知识库设置 → 复制 `knowledge_base_id`（一串数字）④ 把三个值告诉 Agent → Agent 写入配置 → 完成。
-**效果**：每周评分 ≥ 8.0 的文章自动入库，以后可检索。
+**怎么做**：① 登录 IMA → 左侧「知识库」→「新建」→ 记住名称 ② 打开 IMA 开发者设置 → 复制 `client_id` 和 `api_key` ③ 在知识库设置 → 复制 `knowledge_base_id`（一串数字）④ 把这些值告诉 Agent → Agent 写入配置 → 完成。
+**效果**：每周评分 ≥ 6.5 的文章自动入库，以后可检索。
 
 ### Level 3 · + MP 自动发现（需 10 分钟配置）
 **需要什么**：个人微信公众号（订阅号即可，不需发文章）+ Edge 浏览器。
-**怎么做**：① 登录微信公众平台（mp.weixin.qq.com）→ 左侧「内容管理」→ 确认能看到已发布文章列表 ② Agent 引导关注目标公众号（建议关注至少 3 个法院公众号）③ Agent 读取 Edge cookie 中的 MP 登录态 → 自动拉取文章列表。
+**怎么做**：① 登录微信公众平台（mp.weixin.qq.com）→ 左侧「内容管理」→ 确认能看到已发布文章列表 ② Agent 引导关注目标公众号（默认已配置 4 个：山东高法/上海一中院/上海二中院/中国应用法学）③ Agent 通过 `refresh_session_from_edge.py` 读取 Edge cookie 中的 MP 登录态 → 自动拉取文章列表。
 **效果**：不再需要手动搜文章，Agent 自动从关注的公众号拉取。
 
 ### 常见问题
