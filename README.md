@@ -1,11 +1,12 @@
 # legal-weekly-briefing
 
-> **你的第二大脑的输入管道。** 每周法院公众号发几十篇文章——可解释的 k-NN 评分引擎帮你挤出 10 条值得精读的判例和方法论，其余全量进 IMA 知识库，以后打官司直接搜。
+> **你的第二大脑的输入管道。** 每周法院公众号发几十篇文章——7 维可解释法律评分引擎帮你挤出 10 条值得精读的判例和方法论，其余全量进 IMA 知识库，以后打官司直接搜。
 
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-compatible-22c55e)](https://docs.anthropic.com/en/docs/claude-code/skills)
 [![Level 1](https://img.shields.io/badge/Level%201-zero--deps-blue)](scripts/scoring_engine.py)
 [![CC BY-SA 4.0](https://img.shields.io/badge/license-CC%20BY--SA%204.0-green.svg)](LICENSE)
 [![community](https://img.shields.io/badge/community-open%20source-7c5e3e)](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing)
+[![version](https://img.shields.io/badge/version-v3.0.0-7c5e3e)](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/releases)
 
 > [查看 Demo 周报效果](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/blob/main/assets/showcase/demo-weekly.png)
 
@@ -44,7 +45,8 @@ python3 scripts/demo.py
 | 产物 | 说明 | 示例 |
 |------|------|------|
 | 周报 MD / HTML | 10 条精选（AI+法律 3 + 纯法律 7），按分数降序，带领域标签 | 【9.5】Harvey × Microsoft 365 原生集成 |
-| HTML 周报 · 其他领域速览 | 雷达区：legal 未进精读的前 8 条，低分条做低调视觉标记 | 【6.5】矿产资源法实施条例施行 |
+| HTML 周报 · Radar 雷达区 | 未进精读的 legal 条目（最多 8 条），低分条做低调视觉标记——执业圈外趋势不放过 | 【6.5】矿产资源法实施条例施行 |
+| `candidates.jsonl` | `build_candidates.py` 构建的 7 维特征候选池 | `{"features":{"case_density":4,"norm_anchoring":3,...}}` |
 | `ima_import_queue.jsonl` | 待入库队列（url + folder_id + 分类），由 IMA 客户端消费 | `{"url":"...","folder_id":"...","category":"公司"}` |
 | `run-report.json` | 执行报告（候选数、导入数、自检结果） | `{"self_check":{"ok":true}}` |
 
@@ -54,9 +56,9 @@ python3 scripts/demo.py
 # 1. 安装 skill 后，进入技能目录
 cd ~/.workbuddy/skills/legal-weekly-briefing   # 或你的 skill 安装路径
 
-# 2. 准备候选文件 candidates.jsonl（每行一条）
-# {"title":"文章标题","url":"https://...","category":"legal","source":"上海一中院",
-#  "features":{"author_tier":2,"platform_tier":3,"depth":1,"relevance":1}}
+# 2. 构建候选池（7 维特征标注）
+# build_candidates.py 负责特征提取+标注+分类，产出入参格式的 candidates.jsonl
+PYTHONPATH=scripts python3 scripts/build_candidates.py
 
 # 3. 跑流水线
 PYTHONPATH=scripts python3 scripts/run_pipeline.py candidates.jsonl
@@ -80,14 +82,16 @@ PYTHONPATH=scripts python3 scripts/verify.py
 
 ## 示例
 
-**输入**（`candidates.jsonl` 节选）：
+**输入**（`candidates.jsonl` 节选，v3 7 维特征）：
 ```json
 {"title":"董监高违反勤勉义务的赔偿责任认定","url":"http://mp.weixin.qq.com/s?__biz=MzA4MzY3NjMxNw==&mid=2656555271&idx=1&sn=b1400188c0f5bacf94f7b60371abfb3b&chksm=8451acf5b32625e3#rd",
  "category":"legal","source":"上海二中院",
- "features":{"author_tier":2,"platform_tier":3,"depth":1,"relevance":1}}
+ "features":{"case_density":3,"norm_anchoring":4,"actionability":3,
+   "author_empirical_depth":4,"framework_quality":3,"relevance_halflife":4,
+   "jurisdictional_proximity":0}}
 ```
 
-**执行**：`run_pipeline.py` 去重 → k-NN 评分 → diversity-aware 选 10 条 → 写周报 → 法院来源且分数≥6.5 的写入 IMA 队列。
+**执行**：`run_pipeline.py` 去重 → 7-D k-NN 评分 → diversity-aware 选 10 条 → 写周报 → 法院来源且分数≥7.0 的写入 IMA 队列。
 
 **输出**（周报片段）：
 ```
@@ -106,18 +110,36 @@ http://mp.weixin.qq.com/s?__biz=MzA4MzY3NjMxNw==&mid=2656555271&idx=1&sn=b140018
 
 | 维度 | 通用 RSS/News Digest Skill | 本 Skill |
 |------|---------------------------|---------|
-| 评分依据 | 发布时间 / 来源权重 | **k-NN 近邻评分**，基于 62 条人工标注训练集，区分"体系化方法论"vs"个案叙事" |
-| 三层分流 | 单一输出 | **精读区（10 条）+ 雷达区（8 条）+ IMA 入库（全量）** 分流，噪音自然落选 |
-| 法律专业性 | 通用关键词 | 法院公众号专属 taxonomy（婚姻家事/公司/建工/劳保…10 类），priority 裁决避免误分类 |
+| 评分依据 | 发布时间 / 来源权重 | **7 维 k-NN 加权评分**，基于 62 条人工标注训练集，自动映射旧维度保持向后兼容 |
+| 三层分流 | 单一输出 | **精读区（10 条）+ Radar 雷达区（8 条）+ IMA 入库（全量）** 分流，噪音自然落选 |
+| 法律专业性 | 通用关键词 | 法院公众号专属 taxonomy（10 类），priority 裁决避免误分类 |
+| 内容发现 | 固定来源 | **Pre-flight Check**：启动时检测 MP 可用性 → 路径声明 → 摘要三级回退（MP digest → snippet → WebFetch） |
 | 冷启动 | 无 | 训练集缺失时线性降级打分，不崩 |
+
+## 核心升级：v3.0 评分引擎 4D → 7D
+
+v3.0 将法律条目评分从 4 维扩展到 7 维，提供更精细的实务价值区分度：
+
+| 维度 | 权重 | 说明 |
+|------|------|------|
+| `case_density` | 0.18 | 案例密度——有没有具体案子 |
+| `norm_anchoring` | 0.18 | 规范锚定——是否回到法条/司法解释/入库案例 |
+| `actionability` | 0.18 | 可操作性——读完能直接拿走的规则 |
+| `author_empirical_depth` | 0.16 | 作者实证深度——不看头衔看审级+论证功底 |
+| `framework_quality` | 0.12 | 框架定性——先定法域框架 vs 堆材料 |
+| `relevance_halflife` | 0.10 | 时效半衰期——基础方法永不过时 vs 前沿快过时 |
+| `jurisdictional_proximity` | 0.08 | 地域贴近度——管辖地匹配加分 |
+
+旧 4 维（`author_tier` / `platform_tier` / `depth` / `relevance`）权重置零，保留字段兼容旧训练集。
 
 ## 安全边界
 
-- **不删不改你的文件**：流水线只新增 `周报_*.md` / `ima_import_queue.jsonl` / `run-report.json`，不碰源数据。
+- **不删不改你的文件**：流水线只新增 `周报_*.md` / `candidates.jsonl` / `ima_import_queue.jsonl` / `run-report.json`，不碰源数据。
 - **不自动发外部请求**：`ima_importer.py` 只产出队列文件，真正的 IMA API 调用由外层客户端（MCP/你的脚本）显式执行——你掌控每一次上传。
 - **不泄露凭证**：`~/.config/ima/client_id` + `api_key` 由你本地保管，脚本不读取、不打印、不打包。
 - **分类不确定会停下**：无 folder_id 匹配时写入 `failed_import.jsonl` 等你补配置，不静默丢弃。
 - **不会因同一来源刷屏**：`max_per_source=2` 限制同源在周报中最多 2 条。
+- **IMA 知识库仅限自建**：不指引用户订阅/加入非自建 KB，`knowledge_base_id` 占位符未替换时导入自动阻断。
 
 ## 文件结构
 
@@ -126,19 +148,25 @@ legal-weekly-briefing/
 ├── SKILL.md                     ← 技能主文档（触发词 + 架构 + 用法）
 ├── README.md                    ← 本文件
 ├── scripts/
-│   ├── scoring_engine.py        ← k-NN 评分引擎 v2.1（核心）
-│   ├── run_pipeline.py          ← 流水线编排：去重→评分→周报→IMA队列
+│   ├── scoring_engine.py        ← 7-D k-NN 评分引擎 v3.0（核心）
+│   ├── run_pipeline.py          ← 流水线编排：去重→评分→周报→HTML渲染→IMA队列
+│   ├── build_candidates.py      ← 候选构建：7 维特征标注 + 动态法院层级检测
+│   ├── demo.py                  ← 演示周报生成（零配置体验）
+│   ├── render_html.py           ← HTML 渲染器（含 Radar 雷达区）
 │   ├── dedupe.py                ← URL/标题去重
-│   ├── ima_importer.py          ← IMA 分类 + 队列写出（不直接调 API）
+│   ├── ima_importer.py          ← IMA 分类 + 队列写出 + 去重缓存管理
+│   ├── import_ima.py            ← 独立 IMA OpenAPI 导入器
+│   ├── fetch_mp_week.py         ← MP 文章批量拉取（需 Session）
 │   ├── normalize_url.py         ← 聚合链接还原为 mp 原始链接
-│   └── verify.py                ← 回归测试（6 样例，安装后自检）
+│   ├── verify.py                ← 回归测试（18 项，安装后自检）
+│   └── install.sh               ← 一键安装脚本
 ├── assets/
 │   ├── config/
-│   │   ├── settings.yaml        ← 权重/阈值/条数/兴趣赛道（开源用户按领域改）
+│   │   ├── settings.yaml        ← v3 权重/阈值/条数/兴趣赛道（开源用户按领域改）
 │   │   ├── sources.yaml         ← 搜索关键词 / MP 账号配置
 │   │   └── taxonomy.yaml        ← IMA 分类映射（⚠️ folder_id 需替换为你自己的）
 │   └── data/
-│       ├── scoring-training.jsonl  ← 62 条人工标注训练集
+│       ├── scoring-training.jsonl  ← 62 条标注训练集（v3 自动映射旧维度→新维度）
 │       └── test-prompts.json       ← verify.py 使用的回归样例
 └── references/
     ├── feature-guide.md            ← 特征标注速查 + 石头评分八判据（v2.0）
@@ -167,11 +195,12 @@ PYTHONPATH=scripts python3 scripts/verify.py
 
 | Level | 依赖 | 能力 |
 |-------|------|------|
-| **Level 1** | Python 3.9+ | 评分引擎 + 周报生成（零外部依赖） |
-| **Level 2** | + IMA 账号 | 全量入库 IMA 知识库（RAG 检索增强） |
-| **Level 3** | + MP 后台权限 | 自动拉取法院公众号三账号文章（需 [wechat-ocr-research](https://github.com/5tnb6xgsm5-ops/wechat-ocr-research) skill） |
+| **Level 0** | Python 3.9+ | `demo.py` 演示周报（零配置，5 分钟体验） |
+| **Level 1** | Python 3.9+ | 7-D 评分引擎 + 周报生成 + HTML 渲染（零外部依赖） |
+| **Level 2** | + IMA 账号 | 全量入库 IMA 知识库（RAG 检索增强，阈值 ≥7.0） |
+| **Level 3** | + MP 后台权限 | 自动拉取法院公众号四账号文章（需 [wechat-ocr-research](https://github.com/5tnb6xgsm5-ops/wechat-ocr-research) skill） |
 
-每一级可独立运行，上层依赖下层。开源用户若无 MP 权限，用 WebSearch 替代 Level 3 的内容发现即可。
+每一级可独立运行，上层依赖下层。开源用户若无 MP 权限，用 WebSearch 替代 Level 3 的内容发现即可——系统通过 Pre-flight Check 自动检测并声明降级路径。
 
 ## License
 
