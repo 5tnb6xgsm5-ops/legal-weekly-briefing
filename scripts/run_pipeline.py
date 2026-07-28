@@ -334,11 +334,16 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
         report["errors"].append(f"render_html 失败: {e}")
         log_stage(report, "render_html", status="degraded", error=str(e))
 
-    # Stage 5: IMA 导入（默认写队列，启用了阈值过滤）
+    # Stage 5: IMA 导入（三层分流：keywords→heuristic→needs_llm 队列）
     if import_fn is None:
-        from ima_importer import import_one
+        from ima_importer import import_one, reset_failed, reset_needs_llm
         def import_fn(items):
-            return [import_one(c['url'], c.get('title', '')) for c in items]
+            return [import_one(c['url'], c.get('title', ''),
+                              source=classify_source(c)) for c in items]
+
+    # 清空上轮队列，避免跨轮累积
+    reset_failed()
+    reset_needs_llm()
 
     # IMA 导入阈值：仅导入分数 >= 阈值 且 来源为法院/官方公众号的条目
     threshold = (settings.get('output', {}) or {}).get('ima_import_threshold', 0)
@@ -348,8 +353,15 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
                   and classify_source(c) in court_sources]
     results = import_fn(importable)
     queued = sum(1 for r in results if r.get('status') in ('imported', 'queued'))
+    needs_llm = sum(1 for r in results if r.get('status') == 'needs_llm')
+    failed = sum(1 for r in results if r.get('status') == 'failed')
     report["counts"]["imported"] = queued
-    log_stage(report, "import", queued=queued, total=len(results))
+    report["counts"]["needs_llm"] = needs_llm  # 待 Agent 层 LLM 兜底
+    report["counts"]["ima_candidates"] = len(importable)
+    if failed:
+        report.setdefault("errors", []).append(f"IMA 导入: {failed} 条硬件失败")
+    log_stage(report, "import", queued=queued, needs_llm=needs_llm, failed=failed,
+              total=len(results), candidates_above_threshold=len(importable))
 
     # 自检
     ok, failures = self_check(report, settings)

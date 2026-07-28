@@ -176,7 +176,10 @@ LLM 返回分类结果 → Agent 按 taxonomy.yaml 映射 folder_id → 回填 `
 ```bash
 # Agent 检查是否有待分类队列
 wc -l needs_llm_classify.jsonl
-# 若 > 0，Agent 执行 LLM 批量分类
+# 若 > 0，Agent 执行 LLM 批量分类，prompt 模板：
+#   "对以下法律文章标题按 taxonomy.yaml 的 11 个分类归类，
+#    输出 JSON: [{idx: 0, category: '公司'}, ...]"
+# 结果回填后 Agent 追加到 ima_import_queue.jsonl
 # 分类完成后：
 > needs_llm_classify.jsonl  # 清空已处理队列
 ```
