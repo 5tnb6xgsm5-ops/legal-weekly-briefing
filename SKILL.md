@@ -181,6 +181,22 @@ wc -l needs_llm_classify.jsonl
 # 结果回填后 Agent 追加到 ima_import_queue.jsonl
 ```
 
+### Step 6: IMA 入库（消费队列，强制执行）
+
+流水线和 LLM 分类完成后，`ima_import_queue.jsonl` 中所有条目必须实际导入 IMA 知识库。
+
+Agent 执行：
+1. 读取 `ima_import_queue.jsonl`，去重（同 URL 保留首次）
+2. 按 `folder_id` 分组
+3. 逐组调用 ima-mcp 的 `import_urls`（knowledge_base_id + folder_id + urls[]）
+4. 输出汇总：「已入库 X 条 / 跳过重复 Y 条 / 失败 Z 条」
+
+```bash
+# Agent 读取队列 → 调用 IMA MCP
+# import_urls 单次最多 10 条 URL，超过分批
+# knowledge_base_id 从 taxonomy.yaml 读取（占位符时阻断并提示用户配置）
+```
+
 ---
 
 ## 适配向导（4 问流程）
