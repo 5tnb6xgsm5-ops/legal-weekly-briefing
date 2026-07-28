@@ -44,6 +44,7 @@ python3 scripts/demo.py
 | 产物 | 说明 | 示例 |
 |------|------|------|
 | 周报 MD / HTML | 10 条精选（AI+法律 3 + 纯法律 7），按分数降序，带领域标签 | 【9.5】Harvey × Microsoft 365 原生集成 |
+| HTML 周报 · 其他领域速览 | 雷达区：legal 未进精读的前 8 条，低分条做低调视觉标记 | 【6.5】矿产资源法实施条例施行 |
 | `ima_import_queue.jsonl` | 待入库队列（url + folder_id + 分类），由 IMA 客户端消费 | `{"url":"...","folder_id":"...","category":"公司"}` |
 | `run-report.json` | 执行报告（候选数、导入数、自检结果） | `{"self_check":{"ok":true}}` |
 
@@ -86,7 +87,7 @@ PYTHONPATH=scripts python3 scripts/verify.py
  "features":{"author_tier":2,"platform_tier":3,"depth":1,"relevance":1}}
 ```
 
-**执行**：`run_pipeline.py` 去重 → k-NN 评分 → diversity-aware 选 10 条 → 写周报 → 法院来源且分数≥8.0 的写入 IMA 队列。
+**执行**：`run_pipeline.py` 去重 → k-NN 评分 → diversity-aware 选 10 条 → 写周报 → 法院来源且分数≥6.5 的写入 IMA 队列。
 
 **输出**（周报片段）：
 ```
@@ -106,7 +107,7 @@ http://mp.weixin.qq.com/s?__biz=MzA4MzY3NjMxNw==&mid=2656555271&idx=1&sn=b140018
 | 维度 | 通用 RSS/News Digest Skill | 本 Skill |
 |------|---------------------------|---------|
 | 评分依据 | 发布时间 / 来源权重 | **k-NN 近邻评分**，基于 62 条人工标注训练集，区分"体系化方法论"vs"个案叙事" |
-| 双管道 | 单一输出 | **周报管道（精选 10 条）+ 知识库管道（全量入库）** 分流 |
+| 三层分流 | 单一输出 | **精读区（10 条）+ 雷达区（8 条）+ IMA 入库（全量）** 分流，噪音自然落选 |
 | 法律专业性 | 通用关键词 | 法院公众号专属 taxonomy（婚姻家事/公司/建工/劳保…10 类），priority 裁决避免误分类 |
 | 冷启动 | 无 | 训练集缺失时线性降级打分，不崩 |
 
@@ -146,7 +147,7 @@ legal-weekly-briefing/
     ├── ima-level2-guide.md         ← IMA Level 2 完整指南
     ├── ima-pitfalls.md             ← IMA 接入踩坑卡
     ├── mp-setup-guide.md           ← MP 自动发现完整配置
-    ├── delivery-gate.md            ← 交付门禁卡（17 项核查）
+    ├── delivery-gate.md            ← 交付门禁卡（18 项核查）
     └── automation-setup.md         ← 自动化调度配置
 ```
 
@@ -158,7 +159,7 @@ legal-weekly-briefing/
 PYTHONPATH=scripts python3 scripts/verify.py
 ```
 
-期望输出：`6 通过 / 0 失败`。若失败，说明 `assets/config/` 路径未被正确加载（检查 `BASE` 解析），或训练集格式损坏。
+期望输出：`18 通过 / 0 失败`。若失败，说明 `assets/config/` 路径未被正确加载（检查 `BASE` 解析），或训练集格式损坏。
 
 **真实数据回放**：将你自己的周报候选粘贴为 `candidates.jsonl`，跑 `run_pipeline.py`，对比输出分数与你的主观判断。62 条训练集偏特定执业方向视角，若你的领域不同，直接编辑 `scoring-training.jsonl` 的标注即可——引擎会自动 coalesce 同向量、冷启动兜底。
 
