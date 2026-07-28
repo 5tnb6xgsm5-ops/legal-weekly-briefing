@@ -23,9 +23,10 @@ try:
 except ImportError:
     yaml = None
 
-BASE = Path(__file__).resolve().parent
-TAXONOMY = BASE / "config" / "taxonomy.yaml"
-CACHE = BASE / "imported_cache.jsonl"
+# 技能根目录（scripts/ 的上一级），assets/ 与 scripts/ 同级
+BASE = Path(__file__).resolve().parent.parent
+TAXONOMY = BASE / "assets" / "config" / "taxonomy.yaml"
+CACHE = BASE / "queued_cache.jsonl"  # 队列去重缓存（非 IMA 导入确认）
 FAILED = BASE / "failed_import.jsonl"
 NEEDS_LLM = BASE / "needs_llm_classify.jsonl"
 
@@ -124,6 +125,12 @@ def save_cache(url):
         f.write(url + '\n')
 
 
+def reset_queued_cache():
+    """清空队列去重缓存 —— 当队列已确认消费（IMA 导入成功）后调用。"""
+    with open(CACHE, 'w') as f:
+        f.write('')
+
+
 def load_failed():
     if not FAILED.exists():
         return []
@@ -144,7 +151,16 @@ def save_failed(entry):
 
 
 def reset_needs_llm():
-    """清空 LLM 待分类队列 —— 每轮 pipeline 启动时调用。"""
+    """清空 LLM 待分类队列 —— 每轮 pipeline 启动时调用。
+
+    保护机制：如果队列非空（上轮 Step 5 未执行），输出警告而非静默清空。
+    """
+    if NEEDS_LLM.exists() and NEEDS_LLM.stat().st_size > 0:
+        import sys
+        print(f"WARNING: needs_llm_classify.jsonl 有残留条目（上轮 Step 5 可能未执行），保留不覆盖",
+              file=sys.stderr)
+        # 不覆盖，等 Step 5 处理完再清空
+        return
     with open(NEEDS_LLM, 'w') as f:
         f.write('')
 
