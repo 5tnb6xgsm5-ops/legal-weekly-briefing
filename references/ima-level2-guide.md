@@ -60,13 +60,13 @@ run_pipeline.py 产出 ima_import_queue.jsonl
 
 ## 导入 IMA
 
-`run_pipeline.py` 自动将 `score ≥ 7.0` 且来源为法院公众号的条目写入 `ima_import_queue.jsonl`。
+`run_pipeline.py` 自动将 `score ≥ 6.5` 且来源为法院公众号的条目写入 `ima_import_queue.jsonl`。
 
 周报精选和 IMA 入库是**两条独立管道**：
 - **周报**：diversity-aware 选 10 条精品，受 `max_per_source` 限制同源≤2
-- **IMA**：分数 ≥ 7.0 的法院源条目**全部**入库，不限条数、不受同源限制
+- **IMA**：分数 ≥ 6.5 的法院源条目**全部**入库，不限条数、不受同源限制
 
-7.0 = "典型案例(宣传为主)"及以上质量。会议综述/纯新闻（<7.0）不入库。调整阈值：修改 `settings.yaml` 中的 `ima_import_threshold`。
+6.5 = 雷达区显示线 = IMA 入库线。调整阈值：修改 `settings.yaml` 中的 `ima_import_threshold`。
 
 IMA OpenAPI 端点: `POST https://ima.qq.com/openapi/wiki/v1/import_urls`
 认证头: `ima-openapi-clientid` + `ima-openapi-apikey`
