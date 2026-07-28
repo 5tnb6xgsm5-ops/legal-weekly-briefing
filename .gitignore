@@ -20,6 +20,7 @@ config/.env
 # 运行生成文件
 mp_articles.json
 imported_cache.jsonl
+queued_cache.jsonl
 failed_import.jsonl
 needs_llm_classify.jsonl
 candidates.jsonl
