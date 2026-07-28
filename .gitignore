@@ -21,6 +21,7 @@ config/.env
 mp_articles.json
 imported_cache.jsonl
 failed_import.jsonl
+needs_llm_classify.jsonl
 candidates.jsonl
 周报_*.html
 demo_data_*.json

@@ -115,6 +115,25 @@ PYTHONPATH=scripts python3 scripts/run_pipeline.py candidates.jsonl
 python3 scripts/verify.py  # 期望: 18 通过 / 0 失败
 ```
 
+流水线 Stage 5 自动完成三层分流：
+- **路径1**：taxonomy 关键词命中 → 直接写入 `ima_import_queue.jsonl`
+- **路径2**：启发式规则命中 → 直接写入 `ima_import_queue.jsonl`
+- **路径3**：均不命中 → 写入 `needs_llm_classify.jsonl`
+
+### Step 5: LLM 批量兜底分类（Agent 层，仅当 needs_llm_classify.jsonl 非空时触发）
+
+若 `needs_llm_classify.jsonl` 非空，Agent 读取该文件 → 一次性将全部待分类标题传给 LLM →
+LLM 返回分类结果 → Agent 按 taxonomy.yaml 映射 folder_id → 回填 `ima_import_queue.jsonl`。
+
+```bash
+# Agent 检查是否有待分类队列
+wc -l needs_llm_classify.jsonl
+# 若 > 0，Agent 执行 LLM 批量分类，prompt 模板：
+#   "对以下法律文章标题按 taxonomy.yaml 的 11 个分类归类，
+#    输出 JSON: [{idx: 0, category: '公司'}, ...]"
+# 结果回填后 Agent 追加到 ima_import_queue.jsonl
+```
+
 ---
 
 ## 适配向导（4 问流程）
