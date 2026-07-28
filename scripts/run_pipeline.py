@@ -105,19 +105,35 @@ def classify_source(candidate):
     title = candidate.get('title', '') or ''
     url = candidate.get('url', '') or ''
 
-    # 法院公众号（精确匹配）
-    if '山东高法' in src or '山东高法' in title:
+    # 优先级：source > url > title（title 最不可靠，可能含法院名但来源不是法院）
+    # 法院公众号（精确匹配，先查 source）
+    if '山东高法' in src:
         return '山东高法'
-    if '上海一中' in src or '上海一中' in title:
+    if '上海一中' in src:
         return '上海一中院'
-    if '上海二中' in src or '上海二中' in title:
+    if '上海二中' in src:
         return '上海二中院'
-    if '最高法' in src or '最高人民法院' in src or 'court.gov.cn' in url:
+    if '最高法' in src or '最高人民法院' in src:
         return '最高法'
     if '全国人大' in src:
         return '全国人大'
-    if '国务院' in src or '人社部' in src or 'gov.cn' in url:
+    if '国务院' in src or '人社部' in src:
         return '国务院/部委'
+
+    # URL 域名判断（在 title 之前，避免 title 污染）
+    if 'court.gov.cn' in url:
+        return '最高法'
+    if 'gov.cn' in url:
+        return '国务院/部委'
+
+    # title 兜底（最后才用，且只匹配明确法院名）
+    if '山东高法' in title:
+        return '山东高法'
+    if '上海一中' in title:
+        return '上海一中院'
+    if '上海二中' in title:
+        return '上海二中院'
+
     # 国际法律科技源
     if 'Artificial Lawyer' in src:
         return 'Artificial Lawyer'
@@ -195,10 +211,22 @@ def default_write_report(candidates, scored):
         f.write(f"# 法律周报 {date.today().isoformat()}\n\n")
         f.write("## AI + 法律\n\n")
         for c in ai_selected:
-            f.write(f"【{c.get('score')}】{c.get('title')}\n{c.get('url', '')}\n\n")
+            f.write(f"### {c.get('title')}\n")
+            f.write(f"【{c.get('score')}】{c.get('url', '')}\n\n")
+            if c.get('abstract'):
+                f.write(f"{c.get('abstract')}\n\n")
+            if c.get('recommend'):
+                f.write(f"> 推荐理由：{c.get('recommend')}\n\n")
+            f.write("---\n\n")
         f.write("## 纯法律\n\n")
         for c in legal_selected:
-            f.write(f"【{c.get('score')}】{c.get('title')}\n{c.get('url', '')}\n\n")
+            f.write(f"### {c.get('title')}\n")
+            f.write(f"【{c.get('score')}】{c.get('url', '')}\n\n")
+            if c.get('abstract'):
+                f.write(f"{c.get('abstract')}\n\n")
+            if c.get('recommend'):
+                f.write(f"> 推荐理由：{c.get('recommend')}\n\n")
+            f.write("---\n\n")
 
     # 将 diversity 过滤掉但仍需导入 IMA 的条目放回 scored 的报告中
     # （不修改 scored 本身，因为 selection 可能被外部使用）
@@ -286,7 +314,9 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
 
     # IMA 导入阈值：仅导入分数 >= 阈值 且 来源为法院/官方公众号的条目
     threshold = (settings.get('output', {}) or {}).get('ima_import_threshold', 0)
-    court_sources = {'山东高法', '上海一中院', '上海二中院', '最高法', '国务院/部委'}
+    court_sources = {'山东高法', '上海一中院', '上海二中院', '最高法', '全国人大', '国务院/部委'}
+    
+    # 分数达标的条目
     importable = [c for c in scored
                   if c.get('score', 0) >= threshold
                   and classify_source(c) in court_sources]
