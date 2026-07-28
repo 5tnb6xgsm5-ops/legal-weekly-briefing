@@ -26,9 +26,9 @@ try:
 except ImportError:
     yaml = None
 
-# 技能根目录（scripts/ 的上一级），assets/ 与 scripts/ 同级
-BASE = Path(__file__).resolve().parent.parent
-SETTINGS_FILE = BASE / "assets" / "config" / "settings.yaml"
+BASE = Path(__file__).resolve().parent
+SETTINGS = BASE / "config" / "settings.yaml"
+RUNS_DIR = BASE / ".workbuddy" / "runs"
 
 
 class PipelineError(Exception):
@@ -44,26 +44,18 @@ class FatalError(PipelineError):
 
 
 def load_settings():
-    if yaml is None or not SETTINGS_FILE.exists():
+    if yaml is None or not SETTINGS.exists():
         return {}
-    with open(SETTINGS_FILE) as f:
+    with open(SETTINGS) as f:
         return yaml.safe_load(f) or {}
-
-
-def _get_runs_dir():
-    """读取 settings.yaml 的 runs_dir，回退到 'runs'。"""
-    settings = load_settings()
-    runs_dir = settings.get("pipeline", {}).get("runs_dir", "runs")
-    return BASE / runs_dir
 
 
 def log_stage(report, stage, **kw):
     entry = {"ts": time.time(), "stage": stage, **kw}
     report["stages"].append(entry)
     # 结构化日志落盘
-    runs_dir = _get_runs_dir()
-    runs_dir.mkdir(parents=True, exist_ok=True)
-    logfile = runs_dir / f"{date.today().isoformat()}.jsonl"
+    RUNS_DIR.mkdir(parents=True, exist_ok=True)
+    logfile = RUNS_DIR / f"{date.today().isoformat()}.jsonl"
     with open(logfile, 'a') as f:
         f.write(json.dumps(entry, ensure_ascii=False) + '\n')
     return entry
@@ -105,35 +97,21 @@ def classify_source(candidate):
     title = candidate.get('title', '') or ''
     url = candidate.get('url', '') or ''
 
-    # 优先级：source > url > title（title 最不可靠，可能含法院名但来源不是法院）
-    # 法院公众号（精确匹配，先查 source）
-    if '山东高法' in src:
+    # 法院公众号（精确匹配）
+    if '山东高法' in src or '山东高法' in title:
         return '山东高法'
-    if '上海一中' in src:
+    if '上海一中' in src or '上海一中' in title:
         return '上海一中院'
-    if '上海二中' in src:
+    if '上海二中' in src or '上海二中' in title:
         return '上海二中院'
-    if '最高法' in src or '最高人民法院' in src:
+    if '中国应用法学' in src or '中国应用法学' in title:
+        return '中国应用法学'
+    if '最高法' in src or '最高人民法院' in src or 'court.gov.cn' in url:
         return '最高法'
     if '全国人大' in src:
         return '全国人大'
-    if '国务院' in src or '人社部' in src:
+    if '国务院' in src or '人社部' in src or 'gov.cn' in url:
         return '国务院/部委'
-
-    # URL 域名判断（在 title 之前，避免 title 污染）
-    if 'court.gov.cn' in url:
-        return '最高法'
-    if 'gov.cn' in url:
-        return '国务院/部委'
-
-    # title 兜底（最后才用，且只匹配明确法院名）
-    if '山东高法' in title:
-        return '山东高法'
-    if '上海一中' in title:
-        return '上海一中院'
-    if '上海二中' in title:
-        return '上海二中院'
-
     # 国际法律科技源
     if 'Artificial Lawyer' in src:
         return 'Artificial Lawyer'
@@ -194,7 +172,10 @@ def select_diverse(scored, category, count, max_per_source):
 
 
 def default_write_report(candidates, scored):
-    """简报写入：diversity-aware 选择 + 分数降序排列，返回路径。"""
+    """简报写入：diversity-aware 选择 + 分数降序排列，返回 (路径, ai_selected, legal_selected, legal_remaining)。
+
+    Stage 4.5 HTML 渲染复用全部 legal 条目（selected + remaining），remaining 供雷达区使用。
+    """
     settings = load_settings()
     out = settings.get('output', {})
     template = out.get('report_template', '周报_{date}.md')
@@ -207,30 +188,59 @@ def default_write_report(candidates, scored):
     ai_selected, ai_remaining = select_diverse(scored, 'ai-legal', ai_count, max_per_source)
     legal_selected, legal_remaining = select_diverse(scored, 'legal', legal_count, max_per_source)
 
+    # AI+法律 signal_strength 标签映射
+    signal_labels = {1: '格局级', 2: '应用落地级', 3: '融资动态级'}
+
+    # 分类器（轻量导入，避免循环依赖）
+    from ima_importer import classify as _classify
+
     with open(path, 'w') as f:
-        f.write(f"# 法律周报 {date.today().isoformat()}\n\n")
+        report_date = date.today().isoformat()
+        f.write(f"# 法律周报 {report_date}\n\n")
         f.write("## AI + 法律\n\n")
         for c in ai_selected:
-            f.write(f"### {c.get('title')}\n")
-            f.write(f"【{c.get('score')}】{c.get('url', '')}\n\n")
-            if c.get('abstract'):
-                f.write(f"{c.get('abstract')}\n\n")
-            if c.get('recommend'):
-                f.write(f"> 推荐理由：{c.get('recommend')}\n\n")
-            f.write("---\n\n")
-        f.write("## 纯法律\n\n")
-        for c in legal_selected:
-            f.write(f"### {c.get('title')}\n")
-            f.write(f"【{c.get('score')}】{c.get('url', '')}\n\n")
-            if c.get('abstract'):
-                f.write(f"{c.get('abstract')}\n\n")
-            if c.get('recommend'):
-                f.write(f"> 推荐理由：{c.get('recommend')}\n\n")
+            score = c.get('score', 0)
+            title = c.get('title', '')
+            url = c.get('url', '')
+            src = classify_source(c)
+            sig = c.get('features', {}).get('signal_strength', 2)
+            sig_label = signal_labels.get(sig, '')
+            abstract = c.get('abstract', '')
+            recommend = c.get('recommend', '')
+
+            f.write(f"### 【{score}】{title}\n\n")
+            f.write(f"📡 {sig_label} · {src}\n\n")
+            if abstract:
+                f.write(f"{abstract}\n\n")
+            if recommend:
+                f.write(f"💡 {recommend}\n\n")
+            f.write(f"🔗 {url}\n\n")
             f.write("---\n\n")
 
-    # 将 diversity 过滤掉但仍需导入 IMA 的条目放回 scored 的报告中
-    # （不修改 scored 本身，因为 selection 可能被外部使用）
-    return str(path)
+        f.write("## 纯法律\n\n")
+        for c in legal_selected:
+            score = c.get('score', 0)
+            title = c.get('title', '')
+            url = c.get('url', '')
+            src = classify_source(c)
+            cat, _, _ = _classify(title)
+            cat_tag = cat or ''
+            abstract = c.get('abstract', '')
+            recommend = c.get('recommend', '')
+
+            f.write(f"### 【{score}】{title}\n\n")
+            parts = [src]
+            if cat_tag:
+                parts.append(cat_tag)
+            f.write(f"📂 {' · '.join(parts)}\n\n")
+            if abstract:
+                f.write(f"{abstract}\n\n")
+            if recommend:
+                f.write(f"💡 {recommend}\n\n")
+            f.write(f"🔗 {url}\n\n")
+            f.write("---\n\n")
+
+    return str(path), ai_selected, legal_selected, legal_remaining
 
 
 def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=None, candidates_raw=None):
@@ -288,64 +298,58 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
     scored.sort(key=lambda x: x.get('score', 0), reverse=True)
     log_stage(report, "score", count=len(scored))
 
-    # Stage 4: 写简报
-    report_path = write_report_fn(candidates, scored)
+    # Stage 4: 写简报（返回 path + ai_selected + legal_selected）
+    report_path, ai_selected, legal_selected, legal_remaining = write_report_fn(candidates, scored)
     report["report_path"] = report_path
     log_stage(report, "write_report", path=report_path)
 
-    # Stage 4.5: 渲染 HTML 周报
+    # Stage 4.5: HTML 渲染（复用 skill 自带的 render_html.py，浅色简报风）
     try:
-        from render_html import render_html as _render
-        report_date = date.today().strftime('%Y.%m.%d')
-        html = _render(scored, report_date)
-        html_path = str(Path(report_path).with_suffix('.html'))
-        with open(html_path, 'w', encoding='utf-8') as f:
-            f.write(html)
-        report["html_path"] = html_path
-        log_stage(report, "render_html", path=html_path)
+        skill_render = Path(os.path.expanduser("~")) / ".workbuddy" / "skills" / "legal-weekly-briefing" / "scripts"
+        if skill_render.exists():
+            sys.path.insert(0, str(skill_render))
+            from render_html import render_html as _render
+            html_articles = []
+            for c in ai_selected + legal_selected + legal_remaining:
+                html_articles.append({
+                    "title": c.get("title", ""),
+                    "url": c.get("url", ""),
+                    "category": c.get("category", "legal"),
+                    "source": c.get("source", ""),
+                    "source_category": c.get("source_category", ""),
+                    "date": c.get("date", ""),
+                    "score": c.get("score", 0),
+                    "tags": c.get("tags", []),
+                    "abstract": c.get("abstract", ""),
+                    "recommend": c.get("recommend", ""),
+                })
+            html_out = _render(html_articles, date.today().strftime('%Y年%m月%d日'))
+            html_path = BASE / f"周报_{date.today().isoformat()}.html"
+            html_path.write_text(html_out, encoding="utf-8")
+            report["html_path"] = str(html_path)
+            log_stage(report, "render_html", path=str(html_path))
+        else:
+            report["errors"].append("render_html.py 未找到，跳过 HTML 渲染")
     except Exception as e:
-        log_stage(report, "render_html", error=str(e))
+        report["errors"].append(f"render_html 失败: {e}")
+        log_stage(report, "render_html", status="degraded", error=str(e))
 
-    # Stage 5: IMA 导入（三层分流：keywords→heuristic→needs_llm 队列）
+    # Stage 5: IMA 导入（默认写队列，启用了阈值过滤）
     if import_fn is None:
-        from ima_importer import import_one, reset_failed, reset_needs_llm
+        from ima_importer import import_one
         def import_fn(items):
-            return [import_one(c['url'], c.get('title', ''),
-                              source=classify_source(c)) for c in items]
-
-    # 清空上轮队列，避免跨轮累积
-    reset_failed()
-    reset_needs_llm()
+            return [import_one(c['url'], c.get('title', '')) for c in items]
 
     # IMA 导入阈值：仅导入分数 >= 阈值 且 来源为法院/官方公众号的条目
     threshold = (settings.get('output', {}) or {}).get('ima_import_threshold', 0)
-    court_sources = {'山东高法', '上海一中院', '上海二中院', '最高法', '全国人大', '国务院/部委'}
-    
-    # 分数达标的条目
+    court_sources = {'山东高法', '上海一中院', '上海二中院', '中国应用法学', '最高法', '国务院/部委'}
     importable = [c for c in scored
                   if c.get('score', 0) >= threshold
                   and classify_source(c) in court_sources]
-
-    # 批次内 URL 去重（同 URL 取最高分）
-    seen = {}
-    for c in importable:
-        url = c.get('url', '')
-        if url not in seen or c.get('score', 0) > seen[url].get('score', 0):
-            seen[url] = c
-    importable = list(seen.values())
-    importable.sort(key=lambda x: x.get('score', 0), reverse=True)
-
     results = import_fn(importable)
     queued = sum(1 for r in results if r.get('status') in ('imported', 'queued'))
-    needs_llm = sum(1 for r in results if r.get('status') == 'needs_llm')
-    failed = sum(1 for r in results if r.get('status') == 'failed')
     report["counts"]["imported"] = queued
-    report["counts"]["needs_llm"] = needs_llm  # 待 Agent 层 LLM 兜底
-    report["counts"]["ima_candidates"] = len(importable)
-    if failed:
-        report.setdefault("errors", []).append(f"IMA 导入: {failed} 条硬件失败")
-    log_stage(report, "import", queued=queued, needs_llm=needs_llm, failed=failed,
-              total=len(results), candidates_above_threshold=len(importable))
+    log_stage(report, "import", queued=queued, total=len(results))
 
     # 自检
     ok, failures = self_check(report, settings)

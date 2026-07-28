@@ -4,12 +4,21 @@
 scoring:
   # 配置 schema 版本（v2: AI+法律引入 signal_strength/domestic_relevance）
   schema_version: 2
-  # 法律条目特征权重（维度有区分度，维持不变）
+  # 法律条目特征权重 v3（2026-07-28 8维重构）
+  # 老四维（author_tier/platform_tier/depth/relevance）已废弃，权重置 0 保留兼容
   legal_weights:
-    author_tier: 0.35
-    platform_tier: 0.30
-    depth: 0.20
-    relevance: 0.15
+    case_density: 0.18           # 案例密度 — 有没有具体案子
+    norm_anchoring: 0.18         # 规范锚定 — 回到法条/司法解释/入库案例
+    actionability: 0.18          # 可操作性 — 读完能拿走的规则
+    author_empirical_depth: 0.16 # 作者实证深度 — 不看头衔看审级+论证功底
+    framework_quality: 0.12      # 框架定性 — 先定法域框架 vs 堆材料
+    relevance_halflife: 0.10     # 时效半衰期 — 基础方法永不过时 vs 前沿快过时
+    jurisdictional_proximity: 0.08  # 地域贴近度 — 浙江/金华法官=1, 其他=0
+    # deprecated（保留兼容旧训练集）
+    author_tier: 0.00
+    platform_tier: 0.00
+    depth: 0.00
+    relevance: 0.00
   # AI+法律条目特征权重（v2 重构）
   # signal_strength: 1格局级/2应用落地/3融资动态（提供区分度，替代零方差的 author/platform）
   # domestic_relevance: 0/1 国内参考价值（仅作呈现标签，不进排序——见 scoring_engine）
@@ -25,9 +34,8 @@ scoring:
   k: 5
   # 置信度阈值（仅用于写入报告元数据，不再视觉告警）
   confidence_threshold: 0.80
-  # 训练集路径（相对技能根目录；缺省指向内置 62 条标注样本）
-  # 开源用户可替换为自己的标注集：拷贝 assets/data/scoring-training.jsonl 后改此值
-  training_path: "assets/data/scoring-training.jsonl"
+  # 训练集路径（相对仓库根；缺失时引擎冷启动降级）
+  training_path: ".workbuddy/memory/scoring-training.jsonl"
   # 兴趣赛道加成（标题命中 +0.3）
   # 开源用户替换为自己的核心执业领域关键词
   interest_keywords:
@@ -59,18 +67,13 @@ output:
   legal_count: 7
   # 来源多样性：同一来源在周报中最多出现的条数（0=不限制）
   max_per_source: 2
-  # IMA 导入最低分数阈值（>=此分的法院公众号来源条目全量导入 IMA，不受周报条数限制）
-  # 6.5 = 雷达区显示线 = IMA 入库线，确保法规更新（如 L050 矿产资源法 6.5 分）能入库
-  ima_import_threshold: 6.5
-  # 雷达区视觉标记阈值：低于此分的 legal 条目在雷达区做低调视觉标记
-  # （不决定能否进雷达区，所有 legal 未进精读前 7 的条目都会进雷达区）
-  radar_score_ceiling: 7.0
+  # IMA 导入分数阈值（7.0 覆盖更多实务文章，周五增量期低分补录）
+  ima_import_threshold: 7.0
 
 pipeline:
   # 失败重试次数
   max_retries: 3
   # 重试退避基数（秒）
   retry_backoff: 2
-  # 运行日志目录（相对于 skill 根目录）
-  # WorkBuddy 用户保持 ".workbuddy/runs"，非 WorkBuddy 用户改为 "runs"
+  # 运行日志目录
   runs_dir: ".workbuddy/runs"

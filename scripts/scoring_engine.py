@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""周报条目优先级自动打分引擎 v2.1（开源化改造）
+"""周报条目优先级自动打分引擎 v3.0（2026-07-28 8维重构）
 
-变更：
-- 权重/阈值/兴趣关键词从 config/settings.yaml 读取
-- 训练集缺失或为空时冷启动降级（线性映射打分 + confidence=0）
-- 不再依赖硬编码个人路径
+法律条目从 4 维升级为 7 维：
+  case_density        案例密度 — 有没有具体案子？只抛现象不谈案子，分就下来
+  norm_anchoring      规范锚定 — 有没有回到法条和司法解释？最高档是引到入库案例
+  actionability       可操作性 — 读完能不能拿走能直接用的规则？
+  author_empirical_depth  作者实证深度 — 不看「法官」头衔，看审级和论证的真功底
+  framework_quality   框架定性 — 好文章先定法域框架再填内容，差文章直接堆材料
+  relevance_halflife  时效半衰期 — 基础方法永不过时 vs 前沿快过时
+  jurisdictional_proximity 地域管辖贴近度 — 浙江/金华本地法官=预判价值
 
 用法：
-    echo '{"features":{"author_tier":2,"platform_tier":3,"depth":1,"relevance":1}}' | python3 scoring_engine.py legal
-    echo '{"features":{"first_hand":1,"depth":1,"relevance":1}}' | python3 scoring_engine.py ai-legal
+    echo '{"features":{"case_density":1,...}}' | python3 scoring_engine.py legal
+    echo '{"features":{"signal_strength":1,...}}' | python3 scoring_engine.py ai-legal
 """
 
 import json, sys, math
@@ -19,15 +23,54 @@ try:
 except ImportError:
     yaml = None
 
-# 技能根目录（scripts/ 的上一级），assets/ 与 scripts/ 同级
-BASE = Path(__file__).resolve().parent.parent
-CONFIG = BASE / "assets" / "config" / "settings.yaml"
+BASE = Path(__file__).resolve().parent
+CONFIG = BASE / "config" / "settings.yaml"
 
 # 默认值（config 缺失时回退，保证单文件可用）
-DEFAULT_LEGAL_WEIGHTS = {'author_tier': 0.35, 'platform_tier': 0.30, 'depth': 0.20, 'relevance': 0.15}
+DEFAULT_LEGAL_WEIGHTS = {
+    'case_density': 0.18, 'norm_anchoring': 0.18, 'actionability': 0.18,
+    'author_empirical_depth': 0.16, 'framework_quality': 0.12,
+    'relevance_halflife': 0.10, 'jurisdictional_proximity': 0.08,
+    # deprecated（保留兼容旧训练集）
+    'author_tier': 0.00, 'platform_tier': 0.00, 'depth': 0.00, 'relevance': 0.00,
+}
 DEFAULT_AI_LEGAL_WEIGHTS = {'signal_strength': 0.50, 'depth': 0.25, 'relevance': 0.15, 'domestic_relevance': 0.10, 'author_tier': 0.00, 'platform_tier': 0.00}
 DEFAULT_INTEREST_KW = ['婚姻', '家事', '抚养', '继承', '离婚', '恋爱', '公司', '股东', '股权', '法人', '商标', '医疗', '诊疗', '知情']
-DEFAULT_TRAINING = BASE / "assets" / "data" / "scoring-training.jsonl"
+DEFAULT_TRAINING = BASE / ".workbuddy" / "memory" / "scoring-training.jsonl"
+
+# ── v3 旧→新 特征映射（训练集向后兼容）──
+# 62 条训练集仍是老四维，运行时动态映射为新七维近似值
+_OLD_TO_NEW_MAP = {
+    # author_tier: 1最高法→1, 2省高院/中院→2, 3基层→3
+    'author_empirical_depth': lambda f: f.get('author_tier', 2),
+    # platform_tier: 1入库案例/公报→1, 2人民法院报→2, 3品牌栏目→2, 4一般→3, 5媒体→3
+    'norm_anchoring': lambda f: {1: 1, 2: 2, 3: 2, 4: 3, 5: 3}.get(f.get('platform_tier', 3), 2),
+    # depth: 1体系分析→1(好框架), 2有分析→2, 3新闻→3
+    'framework_quality': lambda f: f.get('depth', 2),
+    # depth → case_density: 1→1(有案例), 2→2, 3→3(无案例)
+    'case_density': lambda f: f.get('depth', 2),
+    # relevance → actionability: 1→1(直接可用), 2→2, 3→3
+    'actionability': lambda f: f.get('relevance', 2),
+    # relevance → relevance_halflife: 1→1(基础方法), 2→2, 3→2
+    'relevance_halflife': lambda f: min(f.get('relevance', 2), 2),
+    # jurisdictional_proximity: 老数据默认 0（无浙江/金华标签）
+    'jurisdictional_proximity': lambda f: 0,
+}
+
+
+def _map_old_features_to_v3(feat):
+    """将老四维特征映射为 v3 七维特征。已有新维度则不覆盖。"""
+    f = dict(feat)
+    # 检查是否已经是 v3 特征（有任一新维度键）
+    v3_keys = {'case_density', 'norm_anchoring', 'actionability', 'author_empirical_depth',
+               'framework_quality', 'relevance_halflife', 'jurisdictional_proximity'}
+    already_v3 = any(k in f for k in v3_keys)
+    if already_v3:
+        return f  # 已经是 v3，不映射
+    # 老四维 → 新七维
+    for new_key, mapper in _OLD_TO_NEW_MAP.items():
+        f[new_key] = mapper(f)
+    return f
 
 
 def normalize_features(feat, category):
@@ -137,12 +180,17 @@ def linear_fallback(entry, category, weights):
     """冷启动：无训练集时按特征权重线性映射到 1-10 分。"""
     feat = entry.get('features', {})
     if category == 'legal':
-        # author_tier 1-4（越小越高），platform_tier 1-5（越小越高），depth/relevance 1-3（越小越高）
+        # v3 七维：每维 1-3（越小越好），jurisdictional_proximity 0/1 加成
         score = 10.0
-        score -= (feat.get('author_tier', 3) - 1) * 1.2
-        score -= (feat.get('platform_tier', 3) - 1) * 0.8
-        score -= (feat.get('depth', 2) - 1) * 0.6
-        score -= (feat.get('relevance', 2) - 1) * 0.4
+        score -= (feat.get('case_density', 2) - 1) * 0.9
+        score -= (feat.get('norm_anchoring', 2) - 1) * 0.9
+        score -= (feat.get('actionability', 2) - 1) * 0.9
+        score -= (feat.get('author_empirical_depth', 2) - 1) * 0.8
+        score -= (feat.get('framework_quality', 2) - 1) * 0.6
+        score -= (feat.get('relevance_halflife', 2) - 1) * 0.5
+        # 地域贴近加成：浙江/金华法官 +0.5
+        if feat.get('jurisdictional_proximity', 0) == 1:
+            score += 0.5
     else:
         # AI+法律冷启动：signal_strength 1格局/2落地/3融资（越小越高），depth/relevance 越小越高
         ss = feat.get('signal_strength', feat.get('first_hand', 1))
@@ -174,13 +222,21 @@ def predict(entry, category='legal'):
 
     pool = [d for d in data if d.get('category', d.get('type', '')) == category]
     if not pool:
-        # 该类别无训练样本，退回到全量近邻
         pool = data
 
     # 训练集 coalesce：同特征向量合并取均值（防权重虚高）
     pool = coalesce_vectors(pool)
 
+    # v3: 法律条目老训练集特征映射为新七维
+    if category == 'legal':
+        for d in pool:
+            old_feat = d.get('features', {})
+            d['features'] = _map_old_features_to_v3(old_feat)
+
     entry_feat = normalize_features(entry.get('features', {}), category)
+    # v3: 候选条目特征也映射（如果是老四维）
+    if category == 'legal':
+        entry_feat = _map_old_features_to_v3(entry_feat)
 
     scored = []
     for d in pool:

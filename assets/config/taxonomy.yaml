@@ -1,4 +1,4 @@
-knowledge_base_id:  YOUR_KNOWLEDGE_BASE_ID # 精品知识库（替换为你自己的 KB_ID）
+knowledge_base_id: YOUR_KNOWLEDGE_BASE_ID
 categories:
 - name: 婚姻家事
   folder_id: folder_YOUR_FOLDER_ID719758498171
@@ -21,8 +21,8 @@ categories:
   - 共同财产
   - 子女
   - 上学
-  - 赠与
   - 婚外
+  - 赠与
   priority: 10
 - name: 公司
   folder_id: folder_YOUR_FOLDER_ID719792053911
@@ -69,10 +69,6 @@ categories:
   - 设备安装
   - 解除合同
   - 借条
-  - 欠条
-  - 留置
-  - 充值
-  - 打赏
   priority: 8
 - name: 建筑工程
   folder_id: folder_YOUR_FOLDER_ID76175437836595
@@ -85,7 +81,6 @@ categories:
   - 包工头
   - 分包
   - 转包
-  - 建工
   priority: 9
 - name: 交通/保险
   folder_id: folder_YOUR_FOLDER_ID719846576931
@@ -127,8 +122,6 @@ categories:
   - 辞退
   - 索赔
   - 闭店
-  - 欠薪
-  - 雇主
   priority: 9
 - name: 刑事
   folder_id: folder_YOUR_FOLDER_ID719888532098
@@ -142,9 +135,6 @@ categories:
   - 职务侵占
   - 挪用资金
   - 非法集资
-  - 罪
-  - 避险
-  - 危险作业
   priority: 7
 - name: 管辖
   folder_id: folder_YOUR_FOLDER_ID720245050137
@@ -175,7 +165,6 @@ categories:
   - 停车位
   - 拆迁补偿
   - 宅基地
-  - 矿产资源
   priority: 8
 - name: 侵权
   folder_id: folder_YOUR_FOLDER_ID81267046069827
@@ -195,8 +184,6 @@ categories:
   - 开门杀
   - 近视
   - 治疗
-  - 热射病
-  - 损害赔偿
   priority: 8
 - name: 执行
   folder_id: folder_YOUR_FOLDER_ID83158580718644
