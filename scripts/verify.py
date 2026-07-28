@@ -142,6 +142,22 @@ def run_html_gate():
             all_ok &= check(True, "G6-KB_ID已配置",
                             f"knowledge_base_id={kb_val[:20]}...（已替换为自建 KB）")
 
+    # G7: render_html.py 的 radar_score_ceiling 必须从 settings.yaml 读取，不再硬编码
+    if render_path.exists():
+        render_src = render_path.read_text()
+        has_hardcoded_radar = "RADAR_SCORE_CEILING = " in render_src
+        has_settings_reader = "_get_radar_score_ceiling" in render_src
+        settings_path = BASE / "assets" / "config" / "settings.yaml"
+        has_settings_key = False
+        if settings_path.exists():
+            settings_src = settings_path.read_text()
+            has_settings_key = "radar_score_ceiling:" in settings_src
+        all_ok &= check(
+            not has_hardcoded_radar and has_settings_reader and has_settings_key,
+            "G7-雷达阈值收口",
+            "render_html.py 从 settings.yaml 读取 radar_score_ceiling，不再硬编码"
+        )
+
     return all_ok
 
 
