@@ -25,12 +25,16 @@ def normalize_title(title):
 
 
 def canonical_url(url):
-    """URL 规范化：去参数、去 trailing slash、统一 scheme。"""
+    """URL 规范化：去参数、去 trailing slash、统一 scheme。
+
+    注意：mp.weixin.qq.com 链接保留 query（__biz/mid/sn 是文章身份标识，
+    砍掉会把不同文章误判为同一 URL）。"""
     if not url:
         return ""
-    u = url.split('?')[0].split('#')[0]
-    u = u.rstrip('/')
-    return u.lower()
+    u = url.split('#')[0].rstrip('/').lower()
+    if "mp.weixin.qq.com" in u:
+        return u
+    return u.split('?')[0]
 
 
 def similarity(a, b):

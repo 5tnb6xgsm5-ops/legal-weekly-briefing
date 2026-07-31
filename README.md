@@ -174,8 +174,10 @@ legal-weekly-briefing/
     ├── adaptation-wizard.md        ← 适配向导 4 问流程
     ├── ima-level2-guide.md         ← IMA Level 2 完整指南
     ├── ima-pitfalls.md             ← IMA 接入踩坑卡
-    ├── mp-setup-guide.md           ← MP 自动发现完整配置
-    ├── delivery-gate.md            ← 交付门禁卡（18 项核查）
+    ├── mp-setup-guide.md           ← ~~MP 自动发现完整配置~~ ⚠️ DEPRECATED（2026-07-29 微信关闭跨号接口）
+    ├── weread-setup-guide.md       ← 微信读书搜一搜配置（主通道）
+    ├── yuanbao-setup-guide.md      ← 元宝反查配置（补充通道）
+    ├── delivery-gate.md            ← 交付门禁卡（23 项核查）
     └── automation-setup.md         ← 自动化调度配置
 ```
 
@@ -187,7 +189,7 @@ legal-weekly-briefing/
 PYTHONPATH=scripts python3 scripts/verify.py
 ```
 
-期望输出：`18 通过 / 0 失败`。若失败，说明 `assets/config/` 路径未被正确加载（检查 `BASE` 解析），或训练集格式损坏。
+期望输出：`23 通过 / 0 失败`。若失败，说明 `assets/config/` 路径未被正确加载（检查 `BASE` 解析），或训练集格式损坏。
 
 **真实数据回放**：将你自己的周报候选粘贴为 `candidates.jsonl`，跑 `run_pipeline.py`，对比输出分数与你的主观判断。62 条训练集偏特定执业方向视角，若你的领域不同，直接编辑 `scoring-training.jsonl` 的标注即可——引擎会自动 coalesce 同向量、冷启动兜底。
 
@@ -196,11 +198,11 @@ PYTHONPATH=scripts python3 scripts/verify.py
 | Level | 依赖 | 能力 |
 |-------|------|------|
 | **Level 0** | Python 3.9+ | `demo.py` 演示周报（零配置，5 分钟体验） |
-| **Level 1** | Python 3.9+ | 7-D 评分引擎 + 周报生成 + HTML 渲染（零外部依赖） |
-| **Level 2** | + IMA 账号 | 全量入库 IMA 知识库（RAG 检索增强，阈值 ≥7.0） |
-| **Level 3** | + MP 后台权限 | 自动拉取法院公众号四账号文章（需 [wechat-ocr-research](https://github.com/5tnb6xgsm5-ops/wechat-ocr-research) skill） |
+| **Level 1** | Python 3.9+ | 评分引擎 + 周报生成（零外部依赖） |
+| **Level 2** | + IMA 账号 | 全量入库 IMA 知识库（RAG 检索增强） |
+| **Level 3** | + 微信读书账号 | 自动发现法院公众号文章（微信读书「搜一搜」主通道，2026-07-29 微信关闭 MP 跨号接口后确立；元宝反查为补充通道） |
 
-每一级可独立运行，上层依赖下层。开源用户若无 MP 权限，用 WebSearch 替代 Level 3 的内容发现即可——系统通过 Pre-flight Check 自动检测并声明降级路径。
+每一级可独立运行，上层依赖下层。开源用户若无微信读书账号，用 WebSearch 替代 Level 3 的内容发现即可。
 
 ## License
 

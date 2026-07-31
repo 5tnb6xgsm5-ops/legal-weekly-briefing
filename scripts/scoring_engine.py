@@ -188,9 +188,9 @@ def linear_fallback(entry, category, weights):
         score -= (feat.get('author_empirical_depth', 2) - 1) * 0.8
         score -= (feat.get('framework_quality', 2) - 1) * 0.6
         score -= (feat.get('relevance_halflife', 2) - 1) * 0.5
-        # 地域贴近加成：浙江/金华法官 +0.5
+        # 地域贴近加成：浙江/金华法官 +0.8（2026-08-01 随权重上调，本地规则预判价值高）
         if feat.get('jurisdictional_proximity', 0) == 1:
-            score += 0.5
+            score += 0.8
     else:
         # AI+法律冷启动：signal_strength 1格局/2落地/3融资（越小越高），depth/relevance 越小越高
         ss = feat.get('signal_strength', feat.get('first_hand', 1))
@@ -271,6 +271,8 @@ def predict(entry, category='legal'):
                 bonus = 0.3
                 break
 
+    # 2026-08-01 用户裁定：不设封顶线，恢复引擎自然打分（k-NN 距离加权 + 兴趣加成），
+    # 差异化来自特征标注粒度与训练集锚点；同特征条目同分属 k-NN 正常行为（相同输入=相同输出）
     return round(predicted + bonus, 1), round(min(1.0, confidence), 2)
 
 

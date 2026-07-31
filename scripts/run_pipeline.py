@@ -27,7 +27,7 @@ except ImportError:
     yaml = None
 
 BASE = Path(__file__).resolve().parent
-SETTINGS = BASE / "config" / "settings.yaml"
+SETTINGS = BASE.parent / "assets" / "config" / "settings.yaml"
 RUNS_DIR = BASE / ".workbuddy" / "runs"
 
 
@@ -48,6 +48,55 @@ def load_settings():
         return {}
     with open(SETTINGS) as f:
         return yaml.safe_load(f) or {}
+
+
+def preflight_channels() -> dict:
+    """四层降级链前置检查（P4 新增，替代原 MP session 检查）。
+
+    层级（自上而下优先）：
+      1. weread 登录态  → fetch_weread_week.py（微信读书，主通道）
+      2. yuanbao 登录态 → fetch_yuanbao_supplement.py（元宝，补充通道）
+      3. TokenHub key   → fetch_hunyuan_week.py（API 兜底）
+      4. WebSearch      → 手动/Agent 搜索构建候选（最后降级）
+
+    返回 {"levels": [...], "active": "weread|yuanbao|tokenhub|websearch", "missing": [...]}
+    """
+    home = Path.home()
+
+    def check_state(p, vid_name=None):
+        if not p.exists():
+            return False
+        try:
+            cookies = json.loads(p.read_text()).get("cookies", [])
+            if vid_name:
+                return any(c.get("name") == vid_name and c.get("value") for c in cookies)
+            return len(cookies) > 0
+        except Exception:
+            return False
+
+    levels = [
+        {
+            "name": "weread",
+            "ok": check_state(home / ".config" / "weread_state.json", "wr_vid"),
+            "desc": "微信读书登录态（主通道）",
+            "script": "fetch_weread_week.py",
+        },
+        {
+            "name": "yuanbao",
+            "ok": check_state(home / ".config" / "yuanbao_state.json"),
+            "desc": "元宝登录态（补充通道）",
+            "script": "fetch_yuanbao_supplement.py",
+        },
+        {
+            "name": "tokenhub",
+            "ok": (home / ".config" / "tencentcloud" / "tokenhub_api_key").exists(),
+            "desc": "TokenHub API 密钥（兜底通道）",
+            "script": "fetch_hunyuan_week.py",
+        },
+    ]
+    missing = [lv["name"] for lv in levels if not lv["ok"]]
+    active = next((lv["name"] for lv in levels if lv["ok"]), "websearch")
+    return {"levels": levels, "active": active, "missing": missing}
 
 
 def log_stage(report, stage, **kw):
@@ -126,26 +175,31 @@ def classify_source(candidate):
         return '未知来源'
 
 
-def select_diverse(scored, category, count, max_per_source):
+def select_diverse(scored, category, count, max_per_source, score_floor=0.0):
     """多样性感知选择：从已评分候选中选取 top N，同源不超过 max_per_source。
 
     scored: 已按分数降序排列的候选列表（含 score, category 等字段）
     category: 'ai-legal' | 'legal'（筛选条件）
     count: 目标条数
     max_per_source: 同一来源最大条数（0=不限制）
+    score_floor: 精选评分下限，低于此分不进精选（宁缺毋滥，防低质条目混入）
 
     返回: (selected, remaining) — selected 是入选的 N 条，remaining 是未入选的（可用于 IMA 导入）
     """
     cat_items = [c for c in scored if c.get('category') == category or (category == 'legal' and c.get('category') != 'ai-legal')]
     if not max_per_source or max_per_source <= 0:
-        selected = cat_items[:count]
-        remaining = cat_items[count:]
+        selected = [c for c in cat_items[:count] if c.get('score', 0) >= score_floor]
+        remaining = cat_items[len(selected):]
         return selected, remaining
 
     source_counts = {}
     selected = []
     remaining = []
     for item in cat_items:
+        # 评分下限：低于 floor 不进精选（宁缺毋滥）
+        if item.get('score', 0) < score_floor:
+            remaining.append(item)
+            continue
         s = classify_source(item)
         if len(selected) >= count:
             remaining.append(item)
@@ -156,12 +210,14 @@ def select_diverse(scored, category, count, max_per_source):
         else:
             remaining.append(item)
 
-    # 如果选不够 count 条（候选太少），允许同源重复
+    # 如果选不够 count 条（候选太少），允许同源重复——但补位仍须满足评分下限
     if len(selected) < count:
         overflow = []
         for item in remaining:
             if len(selected) >= count:
                 break
+            if item.get('score', 0) < score_floor:
+                continue  # 宁缺毋滥：低分条不补位进精选
             selected.append(item)
             overflow.append(item)
         remaining = [r for r in remaining if r not in overflow]
@@ -185,8 +241,9 @@ def default_write_report(candidates, scored):
     path = BASE / template.format(date=date.today().isoformat())
 
     # Diversity-aware selection
-    ai_selected, ai_remaining = select_diverse(scored, 'ai-legal', ai_count, max_per_source)
-    legal_selected, legal_remaining = select_diverse(scored, 'legal', legal_count, max_per_source)
+    score_floor = out.get('select_score_floor', 0)
+    ai_selected, ai_remaining = select_diverse(scored, 'ai-legal', ai_count, max_per_source, score_floor)
+    legal_selected, legal_remaining = select_diverse(scored, 'legal', legal_count, max_per_source, score_floor)
 
     # AI+法律 signal_strength 标签映射
     signal_labels = {1: '格局级', 2: '应用落地级', 3: '融资动态级'}
@@ -240,6 +297,19 @@ def default_write_report(candidates, scored):
             f.write(f"🔗 {url}\n\n")
             f.write("---\n\n")
 
+        # 雷达区（其他领域速览，2026-08-01 补齐 md 第三板块——SKILL.md 交付格式要求）：
+        # 与 HTML 雷达区同规则：未进精选 且 分数低于精选最低分（评分不如精选）
+        featured_scores = [c.get('score', 0) for c in legal_selected]
+        radar_floor = min(featured_scores) if featured_scores else 7.0
+        radar_rows = [c for c in legal_remaining if c.get('score', 0) < radar_floor]
+        if radar_rows:
+            f.write("## 其他领域速览（雷达区）\n\n")
+            for c in radar_rows[:8]:
+                f.write(f"### 【{c.get('score')}】{c.get('title', '')}\n\n")
+                f.write(f"📂 {classify_source(c)}\n\n")
+                f.write(f"🔗 {c.get('url', '')}\n\n")
+                f.write("---\n\n")
+
     return str(path), ai_selected, legal_selected, legal_remaining
 
 
@@ -262,6 +332,17 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
 
     report = {"date": date.today().isoformat(), "stages": [], "counts": {}, "errors": []}
 
+    # Stage 0: 通道前置检查（四层降级链，P4 新增）
+    ch = preflight_channels()
+    log_stage(report, "preflight", active=ch["active"], missing=ch["missing"])
+    for lv in ch["levels"]:
+        mark = "✓" if lv["ok"] else "✗"
+        print(f"  [{mark}] {lv['name']:8s} {lv['desc']}")
+    if ch["missing"]:
+        print(f"  ⚠️ 缺失通道: {', '.join(ch['missing'])} → 降级至 {ch['active']}")
+    if ch["active"] == "websearch":
+        report["errors"].append("所有自动通道不可用，降级 WebSearch（内容发现由调用方完成）")
+
     # Stage 1: 内容发现（含 MP 拉取，失败可降级）
     if candidates_raw is not None:
         candidates_raw = candidates_raw
@@ -283,6 +364,16 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
     # Stage 2: 去重
     from dedupe import dedupe_items
     candidates = dedupe_items(candidates_raw)
+
+    # 字段兜底（P4 新增）：新通道 5 字段候选补全 pipeline 必需字段
+    # abstract ← digest；category 默认 legal；features 空 dict 交给评分引擎冷启动处理
+    for c in candidates:
+        if not c.get("abstract") and c.get("digest"):
+            c["abstract"] = c["digest"]
+        c.setdefault("category", "legal")
+        c.setdefault("features", {})
+        c.setdefault("source", c.get("_source", ""))
+
     report["counts"]["candidates"] = len(candidates)
     log_stage(report, "dedupe", before=len(candidates_raw), after=len(candidates))
 

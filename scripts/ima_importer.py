@@ -22,9 +22,13 @@ except ImportError:
     yaml = None
 
 BASE = Path(__file__).resolve().parent
-TAXONOMY = BASE / "config" / "taxonomy.yaml"
+# taxonomy 读取优先级：本地真实配置（~/.config/legal-weekly/taxonomy.local.yaml，含用户自建 KB_ID/folder_id）
+# > 仓库配置（assets/config/taxonomy.yaml，开源打包版恒为占位符——推送安全，真实值不入 git）
+_LOCAL_TAXONOMY = Path.home() / ".config" / "legal-weekly" / "taxonomy.local.yaml"
+TAXONOMY = _LOCAL_TAXONOMY if _LOCAL_TAXONOMY.exists() else BASE.parent / "assets" / "config" / "taxonomy.yaml"
 CACHE = BASE / "imported_cache.jsonl"
 FAILED = BASE / "failed_import.jsonl"
+NEEDS_LLM = BASE / "needs_llm_classify.jsonl"
 
 
 def load_taxonomy():
@@ -79,11 +83,17 @@ def save_failed(entry):
         f.write(json.dumps(entry, ensure_ascii=False) + '\n')
 
 
+def save_needs_llm(entry):
+    """无法分类的条目写入 needs_llm_classify.jsonl，由 Agent 按 SKILL.md Step 5 做 LLM 批量兜底分类。"""
+    with open(NEEDS_LLM, 'a') as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + '\n')
+
+
 def import_one(url, title, max_retries=3, backoff=2):
     """决定单条是否导入 IMA，并写入待导入队列。
 
     返回 dict: {url, status, folder_id, category, error}
-    status: 'queued'（已写入待导入队列）| 'skipped_duplicate' | 'failed'
+    status: 'queued'（已写入待导入队列）| 'skipped_duplicate' | 'failed' | 'needs_llm'（分类未命中，待 LLM 兜底）
 
     设计：本模块不直接调用 IMA API。它负责"分类决策 + 幂等查重 + 队列写出"，
     真正的 import_urls 调用由外层（WorkBuddy MCP / 用户客户端）读取队列后执行。
@@ -95,10 +105,10 @@ def import_one(url, title, max_retries=3, backoff=2):
 
     category, folder_id, secondary = classify(title)
     if not folder_id:
-        # 无 folder_id（未配置兜底）-> 标失败待人工
-        entry = {"url": url, "title": title, "error": "no_folder_id", "ts": time.time()}
-        save_failed(entry)
-        return {"url": url, "status": "failed", "folder_id": "", "category": category or "", "error": "no_folder_id"}
+        # 无 folder_id（分类未命中且未配置兜底）-> 写入 needs_llm_classify.jsonl，由 Agent LLM 兜底分类（SKILL.md Step 5）
+        entry = {"url": url, "title": title, "ts": time.time()}
+        save_needs_llm(entry)
+        return {"url": url, "status": "needs_llm", "folder_id": "", "category": category or "", "error": "unclassified"}
 
     # 重试：队列写出可能因 IO 失败，退避重试
     last_err = ""

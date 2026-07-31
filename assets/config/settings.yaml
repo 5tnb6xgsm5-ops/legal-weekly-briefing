@@ -13,7 +13,7 @@ scoring:
     author_empirical_depth: 0.16 # 作者实证深度 — 不看头衔看审级+论证功底
     framework_quality: 0.12      # 框架定性 — 先定法域框架 vs 堆材料
     relevance_halflife: 0.10     # 时效半衰期 — 基础方法永不过时 vs 前沿快过时
-    jurisdictional_proximity: 0.08  # 地域贴近度 — 浙江/金华法官=1, 其他=0
+    jurisdictional_proximity: 0.15  # 地域贴近度 — 浙江/金华法官=1, 其他=0（2026-08-01 上调：本地裁判规则对本地律师预判价值高）
     # deprecated（保留兼容旧训练集）
     author_tier: 0.00
     platform_tier: 0.00
@@ -34,8 +34,8 @@ scoring:
   k: 5
   # 置信度阈值（仅用于写入报告元数据，不再视觉告警）
   confidence_threshold: 0.80
-  # 训练集路径（相对仓库根；缺失时引擎冷启动降级）
-  training_path: ".workbuddy/memory/scoring-training.jsonl"
+  # 训练集路径（相对 scripts/ 目录；缺失时引擎冷启动降级）
+  training_path: "../assets/data/scoring-training.jsonl"
   # 兴趣赛道加成（标题命中 +0.3）
   # 开源用户替换为自己的核心执业领域关键词
   interest_keywords:
@@ -56,6 +56,8 @@ scoring:
     - "执行"
     - "股权执行"
     - "强制执行"
+    - "担保"
+    - "追偿"
 
 output:
   # 周报文件名模板
@@ -67,8 +69,12 @@ output:
   legal_count: 7
   # 来源多样性：同一来源在周报中最多出现的条数（0=不限制）
   max_per_source: 2
+  # 精选区评分下限：低于此分不进精读区（宁缺毋滥，2026-08-01 修复 6.5 分低质条目混入精选）
+  select_score_floor: 7.0
   # IMA 导入分数阈值（7.0 覆盖更多实务文章，周五增量期低分补录）
   ima_import_threshold: 7.0
+  # 雷达区低分阈值（render_html.py 读取；低于此分的条目做低调视觉标记）
+  radar_score_ceiling: 7.0
 
 pipeline:
   # 失败重试次数

@@ -59,21 +59,21 @@ interest_keywords: 婚姻、家事、抚养、继承、离婚、恋爱、公司�
 **Agent 收到回答后做什么**：
 
 1. 将新增公众号名称写入 `sources.yaml` 的 `mp.accounts` 和 `websearch.court_accounts`
-2. 如果用户没有提供 MP fakeid，先记下名称，等第四问确定启用 Level 3 后，再引导获取 fakeid
-3. 告知用户：「公众号名称我先记下，fakeid 等后续配置 MP 时教你拿」
+2. 告知用户：「公众号名称我先记下，启用 Level 3 后微信读书/元宝会按名称自动搜索（无需 fakeid——2026-07-29 微信已关闭 MP 跨号接口，旧 fakeid 方案废弃）」
 
 ---
 
-## 第三问：有 MP 后台权限吗？→ 决定 Level 3
+## 第三问：有微信读书账号吗？→ 决定 Level 3
 
 **Agent 引导话术**：
 
-> 你有微信公众号后台的登录权限吗？如果有，我可以帮你配成「自动从公众号后台拉取文章」——不用手动复制链接。没有的话就用 WebSearch 替代，效果类似但需要你手动筛一下候选。
+> 你有微信读书账号吗（App 或 weread.qq.com 网页版均可，微信扫码登录即可，不需要会员）？有的话我可以帮你配成「自动从四个法院公众号拉取文章」——每周自动发现、不用手动复制链接。没有的话就用 WebSearch 替代，效果类似但需要你手动筛一下候选。
 
 **Agent 收到回答后做什么**：
 
-- **有 MP 权限**：进入 MP 自动发现完整配置（见 `references/mp-setup-guide.md`），逐步安装 wechat-ocr-research skill、配 Edge 浏览器 cookie、验证 session
-- **没有 MP 权限**：保持 WebSearch 模式。Agent 可建议「你也可以每次手动抄一批文章链接到 `candidates.jsonl`，跑 Level 1 评分即可」
+- **有微信读书账号**：进入主通道配置（见 `references/weread-setup-guide.md`），引导运行 `python3 scripts/weread_login.py` 扫码登录 → 登录态存 `~/.config/weread_state.json` → 跑 `fetch_weread_week.py --days 7` 验证
+- **可选补充（L2 元宝反查）**：如用户有腾讯元宝账号，引导运行 `python3 scripts/yuanbao_login.py`（见 `references/yuanbao-setup-guide.md`），用于反查微信读书漏掉的「本号原文」链接
+- **没有微信读书账号**：保持 WebSearch 模式。Agent 可建议「你也可以每次手动抄一批文章链接到 `candidates.jsonl`，跑 Level 1 评分即可」
 
 ---
 

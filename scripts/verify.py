@@ -4,9 +4,10 @@
 用法：
     python3 scripts/verify.py
 
-两层检查：
+三层检查：
   1. 评分引擎回归（6 个 test-prompts 样例）
   2. HTML 交付门禁（P0: 模板风格 / 字段完整性 / 流水线集成）
+  3. 新通道门禁（W1-W3: 微信读书登录态 / 通道脚本 / 旧 MP 文档废弃标记）
 
 全部通过 → 退出码 0；任一失败 → 退出码 1。
 """
@@ -127,7 +128,8 @@ def run_html_gate():
         kb_val = ""
         if kb_line:
             import re
-            m = re.search(r'"([^"]*)"', kb_line[0])
+            # 兼容裸值（knowledge_base_id: YOUR_KNOWLEDGE_BASE_ID...）与引号值（knowledge_base_id: "xxx"）两种格式
+            m = re.search(r'knowledge_base_id:\s*"?([^"\s#]+)"?', kb_line[0])
             kb_val = m.group(1) if m else ""
 
         # 作者 KB 检测（P0 — 必须阻断）
@@ -161,18 +163,108 @@ def run_html_gate():
     return all_ok
 
 
+# ============================================================
+# Layer 3: 新通道门禁（P4 新增 — 微信读书/元宝通道就绪检查）
+# ============================================================
+def run_channel_gate():
+    print(f"\n--- 新通道门禁 ---")
+    all_ok = True
+
+    # W1: weread 登录态存在且有效（含非空 wr_vid）
+    weread_state = Path.home() / ".config" / "weread_state.json"
+    w_ok = False
+    w_detail = f"路径: {weread_state}"
+    if weread_state.exists():
+        try:
+            cookies = json.loads(weread_state.read_text()).get("cookies", [])
+            w_ok = any(c.get("name") == "wr_vid" and c.get("value") for c in cookies)
+            w_detail += f" | cookies={len(cookies)}"
+            if not w_ok:
+                w_detail += " | 缺 wr_vid（登录态无效，请重跑 weread_login.py）"
+        except Exception as e:
+            w_detail += f" | 解析失败: {e}"
+    else:
+        w_detail += " | 缺失（请运行 scripts/weread_login.py 扫码）"
+    all_ok &= check(w_ok, "W1-weread登录态", w_detail)
+
+    # W2: fetch_weread_week.py 存在且可编译
+    fww = BASE / "scripts" / "fetch_weread_week.py"
+    exists = fww.exists()
+    compiles = False
+    if exists:
+        try:
+            import py_compile
+            py_compile.compile(str(fww), doraise=True)
+            compiles = True
+        except Exception:
+            compiles = False
+    all_ok &= check(exists, "W2-fetch_weread_week存在", f"路径: {fww}")
+    all_ok &= check(compiles, "W2-fetch_weread_week可执行", "py_compile 通过（语法有效）")
+
+    # W3: mp-setup-guide.md 已标记 DEPRECATED
+    mp_guide = BASE / "references" / "mp-setup-guide.md"
+    dep = False
+    if mp_guide.exists():
+        head = mp_guide.read_text()[:400]
+        dep = "DEPRECATED" in head
+    all_ok &= check(dep, "W3-mp-guide已废弃", "references/mp-setup-guide.md 顶部含 DEPRECATED 标记")
+
+    # W4: 候选内容质量门禁（P6 新增 — 防 Agent 精修被跳过）
+    # 检查 candidates_merged.jsonl：digest 无文末/法条段、recommend 非空、features 非空
+    cand_path = BASE / "scripts" / "candidates_merged.jsonl"
+    if not cand_path.exists():
+        all_ok &= check(True, "W4-候选内容质量(跳过)", "无 candidates_merged.jsonl（未跑 L3 流程），跳过内容质量检查")
+    else:
+        import re as _re
+        bad_digest, bad_recommend, bad_features = [], [], []
+        try:
+            for line in cand_path.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                c = json.loads(line)
+                d = (c.get("digest") or c.get("abstract") or "").strip()
+                r = (c.get("recommend") or "").strip()
+                f = c.get("features") or {}
+                # digest 质量：非空、≥20 字、不以文末特征词/《开头（法条段）
+                if len(d) < 20 or _re.match(r'^(来稿|投稿|关注|点击|长按|扫描|更多信息)|^《[^》]{1,30}》第', d):
+                    bad_digest.append(c.get("title", "?")[:25])
+                # recommend：非空、≥20 字
+                if len(r) < 20:
+                    bad_recommend.append(c.get("title", "?")[:25])
+                # features：非空 dict（法律条目必须有特征标注，空 features → k-NN 评分失真）
+                if not f:
+                    bad_features.append(c.get("title", "?")[:25])
+        except Exception as e:
+            all_ok &= check(False, "W4-候选内容质量", f"解析 candidates_merged.jsonl 失败: {e}")
+            return all_ok
+        w4_ok = not (bad_digest or bad_recommend or bad_features)
+        detail = []
+        if bad_digest:
+            detail.append(f"低质摘要 {len(bad_digest)} 条({','.join(bad_digest[:3])})")
+        if bad_recommend:
+            detail.append(f"缺推荐理由 {len(bad_recommend)} 条({','.join(bad_recommend[:3])})")
+        if bad_features:
+            detail.append(f"缺特征标注 {len(bad_features)} 条({','.join(bad_features[:3])})")
+        all_ok &= check(w4_ok, "W4-候选内容质量", "; ".join(detail) if detail else "digest/recommend/features 全部合格（Agent 精修已执行）")
+
+    return all_ok
+
+
 def main():
     print("legal-weekly-briefing 回归测试 + 交付门禁\n")
 
     scoring_ok = run_scoring_tests()
     html_gate_ok = run_html_gate()
+    channel_ok = run_channel_gate()
 
     total = PASSED + FAILED
     print(f"\n{'='*50}")
     print(f"评分引擎: {'✓ 通过' if scoring_ok else '✗ 失败'}")
     print(f"HTML门禁: {'✓ 通过' if html_gate_ok else '✗ 失败 (P0 — 阻塞交付)'}")
+    print(f"新通道门禁: {'✓ 通过' if channel_ok else '✗ 失败'}")
     print(f"总计: {PASSED} 通过 / {FAILED} 失败 / {total} 项")
-    sys.exit(0 if (scoring_ok and html_gate_ok) else 1)
+    sys.exit(0 if (scoring_ok and html_gate_ok and channel_ok) else 1)
 
 
 if __name__ == "__main__":

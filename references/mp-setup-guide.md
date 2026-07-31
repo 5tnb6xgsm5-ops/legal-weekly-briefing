@@ -1,5 +1,9 @@
 # MP 自动发现 · 完整配置指南
 
+> ⚠️ **DEPRECATED 2026-07-29：微信关闭跨号文章接口，此文档仅供历史参考。**
+> 新通道见 `references/weread-setup-guide.md`（微信读书，主通道）与 `references/yuanbao-setup-guide.md`（元宝，补充通道）。
+> 对应脚本 `scripts/fetch_mp_week.py` 已标记 DEPRECATED。
+
 > 从零搭建微信公众号后台自动拉取文章。内容与 SKILL.md Level 3 章节同步，唯一维护源。
 
 ---

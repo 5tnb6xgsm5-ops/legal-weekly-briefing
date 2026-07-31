@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# DEPRECATED: 2026-07-29 微信关闭跨号接口，此脚本不再可用
 """从 MP 后台拉取三账号近一周文章，合并写入 mp_articles.json。
 依赖：wechat-ocr-research skill 的 wechat_mp_reader（session 已在 cache/session.json）。
 """

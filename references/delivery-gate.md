@@ -6,7 +6,7 @@
 
 ```bash
 python3 scripts/verify.py
-# 期望：18 通过 / 0 失败
+# 期望：23 通过 / 0 失败
 ```
 
 ## 门禁项
@@ -20,6 +20,10 @@ python3 scripts/verify.py
 | G5 | `run_pipeline.py` 含 HTML 渲染调用 | P0 | 阻塞交付 |
 | G6 | `taxonomy.yaml` `knowledge_base_id` 非作者/他人 KB | P0 | 作者 KB → 阻断；占位符 → 警告（打包版合法） |
 | G7 | `render_html.py` 的 `radar_score_ceiling` 从 `settings.yaml` 读取，不硬编码 | P0 | 硬编码 → 阻塞 |
+| W1 | `~/.config/weread_state.json` 存在且含非空 `wr_vid`（微信读书主通道登录态） | P0 | 缺失 → 提示重新扫码 |
+| W2 | `fetch_weread_week.py` 存在且可编译 | P0 | 缺失/语法错误 → 阻塞 |
+| W3 | `references/mp-setup-guide.md` 顶部含 DEPRECATED 标记（旧 MP 通道已废弃） | P0 | 标记丢失 → 阻塞 |
+| W4 | `candidates_merged.jsonl` 内容质量：digest 无文末/法条段、recommend 非空、features 非空（Agent 精修门禁） | P0 | 精修缺失 → 阻塞 |
 
 ## 四条铁律（Agent 强制执行）
 

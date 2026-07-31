@@ -569,14 +569,17 @@ def render_html(articles: list[dict], report_date: str = None) -> str:
     ai_cards = '\n'.join(render_card(a) for a in ai_articles[:3])
     legal_cards = '\n'.join(render_card(a) for a in legal_articles[:7])
 
-    # 雷达区（判据8·执业视野提醒）：legal 类中未进精读前7的 + 分数低于阈值的条目
+    # 雷达区（判据8·执业视野提醒）：legal 类中未进精读前7的 + 分数低于精选最低分的条目
+    # 2026-08-01 修复：雷达区评分必须低于精选（"低分≠消失"设计）——同源均衡挤掉的高分落选条
+    # 不进雷达区（分数高于精选会制造"雷达区比精选分高"的违和），只收分数低于精选最低分的低分条
     featured_urls = {a.get('url') for a in legal_articles[:7]}
+    featured_scores = [a.get('score', 10) for a in legal_articles[:7]]
+    radar_ceiling = min(featured_scores) if featured_scores else _get_radar_score_ceiling()
     radar_pool = []
     for a in legal_articles:
         s = a.get('score', 10)
-        is_low = isinstance(s, (int, float)) and s < _get_radar_score_ceiling()
-        # 未进精读区、或分数低于雷达阈值 → 进雷达区（去重）
-        if (a.get('url') not in featured_urls or is_low) and a not in radar_pool:
+        # 未进精读区 且 分数低于精选最低分 → 雷达区（评分天然不如精选）
+        if a.get('url') not in featured_urls and s < radar_ceiling and a not in radar_pool:
             radar_pool.append(a)
     radar_items = '\n'.join(render_radar_item(a) for a in radar_pool[:8])
     if not radar_items:

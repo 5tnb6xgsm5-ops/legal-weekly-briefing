@@ -12,6 +12,15 @@ session.json
 *.session.json
 *.sess
 
+# 微信读书/元宝登录态（*_login.py 产物）与抓取产物
+we*.json
+*.state.json
+mp_articles_weread.json
+mp_articles_163.json
+wx_links.json
+yuanbao_links.json
+candidates_merged.jsonl
+
 # 本地配置（含 API 凭证等敏感信息）
 config/.env
 .env
@@ -27,3 +36,4 @@ candidates.jsonl
 周报_*.html
 demo_data_*.json
 *.pyc
+scripts/.workbuddy/

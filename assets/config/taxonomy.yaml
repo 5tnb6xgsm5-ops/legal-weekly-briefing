@@ -1,3 +1,4 @@
+# 开源打包版必须为占位符（作者真实 KB_ID 禁止入库）。本地部署时替换为你自建知识库的 ID。
 knowledge_base_id: YOUR_KNOWLEDGE_BASE_ID
 categories:
 - name: 婚姻家事
