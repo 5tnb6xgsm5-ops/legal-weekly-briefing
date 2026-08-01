@@ -6,6 +6,11 @@
 #
 # 用法：在仓库根目录运行  bash scripts/publish_check.sh
 # 铁律：任何 push / Release / 打 tag 之前必须先跑本脚本，未通过禁止发布。
+#
+# 追加铁律（2026-08-01 事故教训）：历史重写（filter-repo）完成后必须【立即】
+# force push（main + 全部 tag），禁止停留在"待 force push"状态——否则后续任何
+# pull / rebase 会把远程泄露历史重新拉回，重写成果作废（实测事故：e13ab65 重写
+# 后未 push，被 pull --rebase 覆盖为 dangling，泄露历史回归）。
 
 set -u
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
