@@ -10,6 +10,8 @@
 
 > [查看 Demo 周报效果](https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing/blob/main/assets/showcase/demo-weekly.png)
 
+> ⚠️ **通道状态披露**：2026-07-29 微信公众平台关闭 MP 跨号搜索接口，本仓库内容发现通道已切换至微信读书「搜一搜」（主）+ 元宝反查（补），公开 API 通道（WSA / TokenHub）经实测均不覆盖公众号内容。详见 [STATUS.md](STATUS.md) —— 含微信读书可实施接口端点清单（不含实施步骤）。
+
 ## 🚀 安装（30 秒）
 
 **只需把这个仓库地址发给 AI 工具：**
