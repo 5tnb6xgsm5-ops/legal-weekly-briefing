@@ -30,7 +30,7 @@ fi
 # ── 2. git 历史敏感模式扫描（教训：HEAD 干净 ≠ 历史干净）──
 echo ""
 echo "  扫描 git 全历史敏感模式（耗时与仓库规模相关）..."
-HITS=$(git log --all -p 2>/dev/null | grep -nE \
+HITS=$(git log --all -p -- . ":(exclude)scripts/publish_check.sh" 2>/dev/null | grep -nE \
     'knowledge_base_id: [^Y"# ]|folder_[0-9]{10,}|ghp_[A-Za-z0-9]{20,}|ima-openapi-apikey[: =][^ "]{8,}' \
     | grep -v '^Binary' | head -20)
 if [ -n "$HITS" ]; then
