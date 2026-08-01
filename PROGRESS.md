@@ -314,7 +314,7 @@ P1-P4 全部收官：L1 微信读书（35 篇/号均 ≥3）+ L2 元宝反查（
 | IMA 入库 | **OpenAPI import_urls 5/5 成功**（ret_code=0），公司 folder 实测可见"债权人撤销权..." ✅ |
 
 **关键发现（P6）**：
-1. **SKILL.md Step 6 体系错配**：原写"调用 ima-mcp 的 import_urls"，但 taxonomy 的 KB_ID/folder_id 是 **OpenAPI 体系**（~/.config/ima/ 凭证），ima-mcp 是另一套 ID（实测  作者KB→ 参数错误）。已修正 Step 6 为 ima-skill OpenAPI 路径
+1. **SKILL.md Step 6 体系错配**：原写"调用 ima-mcp 的 import_urls"，但 taxonomy 的 KB_ID/folder_id 是 **OpenAPI 体系**（~/.config/ima/ 凭证），ima-mcp 是另一套 ID（实测作者 ID → 参数错误）。已修正 Step 6 为 ima-skill OpenAPI 路径
 2. **merge 轮转缺陷（P2）**：merge_candidates.py 无条件读旧 yuanbao_links.json，本轮无 L2 输出时会混入历史条目（4 条 publish_time 空）。需轮转旧文件（已手动 mv 备份）。修复方向：fetch_yuanbao_supplement 无缺失时轮转输出文件，或 merge 加时间窗
 3. **测试残留**：验证 OpenAPI 有效性时用假 URL（TEST123）导入 1 条到根目录，media 已创建但解析会失败，需在 IMA 网页端手动删除
 4. needs_llm_classify.jsonl 累积 53 条（Step 5 LLM 兜底队列，含历史），待批量分类回填

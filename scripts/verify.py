@@ -128,7 +128,7 @@ def run_html_gate():
         kb_val = ""
         if kb_line:
             import re
-            # 兼容裸值（knowledge_base_id: YOUR_KNOWLEDGE_BASE_ID...）与引号值（knowledge_base_id: "xxx"）两种格式
+            # 兼容裸值（knowledge_base_id: 作者ID）与引号值（knowledge_base_id: "xxx"）两种格式
             m = re.search(r'knowledge_base_id:\s*"?([^"\s#]+)"?', kb_line[0])
             kb_val = m.group(1) if m else ""
 
