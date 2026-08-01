@@ -32,7 +32,7 @@ echo ""
 echo "  扫描 git 全历史敏感模式（耗时与仓库规模相关）..."
 HITS=$(git log --all -p -- . ":(exclude)scripts/publish_check.sh" 2>/dev/null | grep -nE \
     'knowledge_base_id: [^Y"# ]|folder_[0-9]{10,}|ghp_[A-Za-z0-9]{20,}|ima-openapi-apikey[: =][^ "]{8,}' \
-    | grep -v '^Binary' | head -20)
+    | grep -v '^Binary' | grep -vE 'YOUR_KNOWLEDGE_BASE_ID|YOUR_KB_ID|作者ID' | head -20)
 if [ -n "$HITS" ]; then
     echo "  ✗ git 历史发现敏感模式（发布前必须清除：filter-repo 重写或删除对应 tag）："
     echo "$HITS"
