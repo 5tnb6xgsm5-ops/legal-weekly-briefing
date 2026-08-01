@@ -104,6 +104,10 @@ def import_one(url, title, max_retries=3, backoff=2):
         return {"url": url, "status": "skipped_duplicate", "folder_id": "", "category": "", "error": ""}
 
     category, folder_id, secondary = classify(title)
+    # 占位符检测：taxonomy.yaml 未配置（开源打包版）时 folder_id 是占位符，
+    # 视为未分类 → needs_llm，避免把条目 queued 到无效 folder
+    if folder_id and "YOUR_" in folder_id:
+        folder_id = ""
     if not folder_id:
         # 无 folder_id（分类未命中且未配置兜底）-> 写入 needs_llm_classify.jsonl，由 Agent LLM 兜底分类（SKILL.md Step 5）
         entry = {"url": url, "title": title, "ts": time.time()}

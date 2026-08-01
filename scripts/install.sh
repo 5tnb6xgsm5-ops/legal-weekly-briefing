@@ -11,10 +11,13 @@ REPO_URL="${REPO_URL:-https://github.com/5tnb6xgsm5-ops/legal-weekly-briefing.gi
 
 echo "📦 安装 $SKILL_NAME ..."
 
-# 如果已经是 git 仓库，直接拉取
+# 如果已经是 git 仓库，直接拉取（网络失败不阻断，继续用本地版本）
 if [ -d "$SKILL_DIR/.git" ]; then
     echo "  已存在，更新..."
-    cd "$SKILL_DIR" && git pull --ff-only
+    cd "$SKILL_DIR" && git pull --ff-only || {
+        echo "   ⚠️  更新失败（网络不可达？），继续使用本地版本"
+        cd - > /dev/null
+    }
 else
     # 首次安装：克隆仓库
     if [ -f "SKILL.md" ]; then
@@ -22,7 +25,10 @@ else
         SKILL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
         echo "  本地安装: $SKILL_DIR"
     else
-        git clone "$REPO_URL" "$SKILL_DIR"
+        git clone "$REPO_URL" "$SKILL_DIR" || {
+            echo "❌ 克隆失败（网络不可达？）：$REPO_URL"
+            exit 1
+        }
     fi
 fi
 
@@ -41,11 +47,19 @@ python3 -c 'import yaml' 2>/dev/null || {
     echo "   安装: pip3 install pyyaml"
 }
 
-# 验证安装
+# Level 3 内容发现依赖（微信读书/元宝抓取需要）
+python3 -c 'import playwright' 2>/dev/null || {
+    echo "   ⚠️  playwright 未安装（Level 3 自动发现文章需要；仅用评分/演示可跳过）"
+    echo "   安装: pip3 install playwright && python3 -m playwright install chromium"
+}
+
+# 验证安装（门禁失败不阻断安装：W1 登录态等前置条件需用户后续配置）
 echo ""
 echo "🧪 验证安装..."
 cd "$SKILL_DIR"
-PYTHONPATH=scripts python3 scripts/verify.py
+PYTHONPATH=scripts python3 scripts/verify.py || {
+    echo "   ⚠️  部分门禁未通过（详见上方，多为登录态等前置条件），安装本身已完成"
+}
 
 echo ""
 echo "🚀 快速体验:"

@@ -34,6 +34,7 @@ import json
 import sys
 import os
 import re
+import html as _html
 from datetime import date
 from pathlib import Path
 
@@ -449,8 +450,10 @@ def load_articles(source_path: str) -> list[dict]:
                 return data['articles']
             if 'report' in data and 'articles' in data['report']:
                 return data['report']['articles']
-            # 尝试找第一个列表字段
-            for v in data.values():
+            # 尝试找第一个列表字段（排除 stages/counts/errors 等日志型字段）
+            for k, v in data.items():
+                if k in {"stages", "counts", "errors", "self_check"}:
+                    continue
                 if isinstance(v, list) and len(v) > 0 and isinstance(v[0], dict):
                     return v
         return data if isinstance(data, list) else []
@@ -506,21 +509,22 @@ def render_card(article: dict) -> str:
     """渲染单张文章卡片。"""
     is_ai = article.get('category') == 'ai-legal'
     score = article.get('score', 0)
+    esc = _html.escape  # 抓取数据不可信，一律转义防 HTML 注入
 
     return CARD_TEMPLATE.format(
         score_class='score-high' if score >= 8.5 else 'score-mid',
         score=f"{score:.1f}" if isinstance(score, (int, float)) else str(score),
-        url=article.get('url', '#'),
-        title=article.get('title', '(无标题)'),
+        url=esc(article.get('url', '#')),
+        title=esc(article.get('title', '(无标题)')),
         ai_class=' ai' if is_ai else '',
-        source_category=article.get('source_category', ''),
-        source_name=article.get('source', ''),
-        date=article.get('date', ''),
-        tags_html='\n        '.join(f'<span class="tag">{t}</span>' for t in article.get('tags', [])),
-        abstract=article.get('abstract', ''),
+        source_category=esc(article.get('source_category', '')),
+        source_name=esc(article.get('source', '')),
+        date=esc(article.get('date', '')),
+        tags_html='\n        '.join(f'<span class="tag">{esc(t)}</span>' for t in article.get('tags', [])),
+        abstract=esc(article.get('abstract', '')),
         ai_rec=' ai' if is_ai else '',
-        recommend=article.get('recommend', ''),
-        link_text=article.get('url', '')[:80].replace('http://', '').replace('https://', ''),
+        recommend=esc(article.get('recommend', '')),
+        link_text=esc(article.get('url', ''))[:80].replace('http://', '').replace('https://', ''),
     )
 
 
@@ -529,12 +533,13 @@ def render_radar_item(article: dict) -> str:
     score = article.get('score', 0)
     score_str = f"{score:.1f}" if isinstance(score, (int, float)) else str(score)
     source = article.get('source') or article.get('source_name', '')
+    esc = _html.escape
     return (
         '      <li class="radar-item">'
         f'<span class="radar-score">{score_str}</span>'
-        f'<span class="radar-title"><a href="{article.get("url", "#")}" target="_blank">'
-        f'{article.get("title", "(无标题)")}</a></span>'
-        f'<span class="radar-source">{source}</span>'
+        f'<span class="radar-title"><a href="{esc(article.get("url", "#"))}" target="_blank">'
+        f'{esc(article.get("title", "(无标题)"))}</a></span>'
+        f'<span class="radar-source">{esc(source)}</span>'
         '</li>'
     )
 

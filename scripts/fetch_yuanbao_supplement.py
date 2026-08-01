@@ -35,7 +35,6 @@ BASE = Path(__file__).resolve().parent
 L1_PATH = BASE / "mp_articles_weread.json"
 OUT_PATH = BASE / "yuanbao_links.json"
 STATE_PATH = Path.home() / ".config" / "yuanbao_state.json"
-CHROMIUM = Path.home() / "Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 
 YUANBAO_URL = "https://yuanbao.tencent.com/chat"
 MIN_INTERVAL = 5        # 提问最小间隔（秒）
@@ -221,7 +220,12 @@ async def run_queries(keys: list, out_path: Path) -> list:
 
     results = []
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, executable_path=str(CHROMIUM))
+        try:
+            browser = await p.chromium.launch(headless=True)
+        except Exception as e:
+            print(f"❌ 浏览器启动失败: {e}", file=sys.stderr)
+            print("请先安装 playwright 浏览器：python3 -m playwright install chromium", file=sys.stderr)
+            sys.exit(1)
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         )

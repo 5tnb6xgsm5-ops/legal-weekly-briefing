@@ -16,7 +16,7 @@
 candidates.jsonl 每行: {"title":..., "url":..., "category":"legal|ai-legal", "features":{...}}
 输出: 周报_<date>.md + ima_import_queue.jsonl + run-report.json
 """
-import json, time, sys, os, re
+import json, time, sys, re
 from pathlib import Path
 from datetime import date
 from urllib.parse import urlparse
@@ -313,6 +313,27 @@ def default_write_report(candidates, scored):
     return str(path), ai_selected, legal_selected, legal_remaining
 
 
+def _infer_features(c):
+    """轻量特征兜底（2026-08-01 对抗审查新增）。
+
+    新通道（微信读书/元宝）候选无 features 字段时，全部条目会拿到评分引擎默认值
+    → 评分同质化，精选/导入排序失真。此处从标题/摘要启发式提取可区分的老四维
+    （author_tier/platform_tier/depth/relevance），与 scoring_engine.normalize_features
+    的键映射对齐。Agent 精修候选时仍建议用 build_candidates.py 的完整七维分类器。
+    """
+    t = (c.get("title", "") or "") + " " + (c.get("abstract", "") or "")
+    feat = {"author_tier": 2, "platform_tier": 3, "depth": 1, "relevance": 2}
+    if any(k in t for k in ["案例", "裁判", "判决", "被告", "原告", "诉"]):
+        feat["depth"] = 2
+    if any(k in t for k in ["规则", "要旨", "指引", "要点", "解读", "分析", "探析"]):
+        feat["depth"] = 3
+    if any(k in t for k in ["最高法", "司法解释", "民法典", "公司法", "法释", "劳动法"]):
+        feat["platform_tier"] = 1
+    elif any(k in t for k in ["省高院", "高院", "典型案例", "公报"]):
+        feat["platform_tier"] = 2
+    return feat
+
+
 def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=None, candidates_raw=None):
     """主入口。
 
@@ -366,13 +387,14 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
     candidates = dedupe_items(candidates_raw)
 
     # 字段兜底（P4 新增）：新通道 5 字段候选补全 pipeline 必需字段
-    # abstract ← digest；category 默认 legal；features 空 dict 交给评分引擎冷启动处理
+    # abstract ← digest；category 默认 legal；features 空 dict 由 _infer_features 启发式兜底
     for c in candidates:
         if not c.get("abstract") and c.get("digest"):
             c["abstract"] = c["digest"]
         c.setdefault("category", "legal")
-        c.setdefault("features", {})
         c.setdefault("source", c.get("_source", ""))
+        if not c.get("features"):
+            c["features"] = _infer_features(c)
 
     report["counts"]["candidates"] = len(candidates)
     log_stage(report, "dedupe", before=len(candidates_raw), after=len(candidates))
@@ -394,33 +416,29 @@ def run_pipeline(discover_fn, write_report_fn=None, import_fn=None, settings=Non
     report["report_path"] = report_path
     log_stage(report, "write_report", path=report_path)
 
-    # Stage 4.5: HTML 渲染（复用 skill 自带的 render_html.py，浅色简报风）
+    # Stage 4.5: HTML 渲染（复用脚本同目录的 render_html.py，浅色简报风）
     try:
-        skill_render = Path(os.path.expanduser("~")) / ".workbuddy" / "skills" / "legal-weekly-briefing" / "scripts"
-        if skill_render.exists():
-            sys.path.insert(0, str(skill_render))
-            from render_html import render_html as _render
-            html_articles = []
-            for c in ai_selected + legal_selected + legal_remaining:
-                html_articles.append({
-                    "title": c.get("title", ""),
-                    "url": c.get("url", ""),
-                    "category": c.get("category", "legal"),
-                    "source": c.get("source", ""),
-                    "source_category": c.get("source_category", ""),
-                    "date": c.get("date", ""),
-                    "score": c.get("score", 0),
-                    "tags": c.get("tags", []),
-                    "abstract": c.get("abstract", ""),
-                    "recommend": c.get("recommend", ""),
-                })
-            html_out = _render(html_articles, date.today().strftime('%Y年%m月%d日'))
-            html_path = BASE / f"周报_{date.today().isoformat()}.html"
-            html_path.write_text(html_out, encoding="utf-8")
-            report["html_path"] = str(html_path)
-            log_stage(report, "render_html", path=str(html_path))
-        else:
-            report["errors"].append("render_html.py 未找到，跳过 HTML 渲染")
+        sys.path.insert(0, str(BASE))
+        from render_html import render_html as _render
+        html_articles = []
+        for c in ai_selected + legal_selected + legal_remaining:
+            html_articles.append({
+                "title": c.get("title", ""),
+                "url": c.get("url", ""),
+                "category": c.get("category", "legal"),
+                "source": c.get("source", ""),
+                "source_category": c.get("source_category", ""),
+                "date": c.get("date", ""),
+                "score": c.get("score", 0),
+                "tags": c.get("tags", []),
+                "abstract": c.get("abstract", ""),
+                "recommend": c.get("recommend", ""),
+            })
+        html_out = _render(html_articles, date.today().strftime('%Y年%m月%d日'))
+        html_path = BASE / f"周报_{date.today().isoformat()}.html"
+        html_path.write_text(html_out, encoding="utf-8")
+        report["html_path"] = str(html_path)
+        log_stage(report, "render_html", path=str(html_path))
     except Exception as e:
         report["errors"].append(f"render_html 失败: {e}")
         log_stage(report, "render_html", status="degraded", error=str(e))

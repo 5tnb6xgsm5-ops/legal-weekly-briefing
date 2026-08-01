@@ -82,7 +82,7 @@ def classify_legal(title, source, digest=""):
 
     # ── 作者实证深度 author_empirical_depth (1-3) ──
     # 来源层
-    if source == "上海一中院" or source == "上海二中院":
+    if source in ("上海一中法院", "上海一中院") or source == "上海二中院":
         base_author = 2
     elif source == "中国应用法学":
         tier = _detect_author_tier_from_digest(d)
@@ -141,7 +141,7 @@ def classify_legal(title, source, digest=""):
 
     # ── 老四维（保留兼容，权重已置 0）──
     features["author_tier"] = base_author
-    if source == "上海一中院" or source == "上海二中院":
+    if source in ("上海一中法院", "上海一中院") or source == "上海二中院":
         features["platform_tier"] = 3
     elif source == "中国应用法学":
         features["platform_tier"] = 3

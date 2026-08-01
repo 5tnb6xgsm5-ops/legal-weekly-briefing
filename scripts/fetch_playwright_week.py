@@ -25,7 +25,7 @@ OUT = BASE / "mp_articles.json"
 
 ACCOUNTS = [
     ("山东高法", "山东高法"),
-    ("上海一中院", "上海一中院"),
+    ("上海一中法院", "上海一中法院"),
     ("上海二中院", "上海二中院"),
     ("中国应用法学", "中国应用法学"),
 ]
@@ -100,12 +100,15 @@ async def search_articles(account_name: str, days: int = 7):
 
     async with async_playwright() as p:
         # Use existing Chromium installation
-        chromium_path = Path.home() / "Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-        browser = await p.chromium.launch(
-            headless=True,
-            executable_path=str(chromium_path),
-            args=["--disable-blink-features=AutomationControlled"],
-        )
+        try:
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
+        except Exception as e:
+            print(f"❌ 浏览器启动失败: {e}", file=sys.stderr)
+            print("请先安装 playwright 浏览器：python3 -m playwright install chromium", file=sys.stderr)
+            sys.exit(1)
 
         try:
             context = await browser.new_context(

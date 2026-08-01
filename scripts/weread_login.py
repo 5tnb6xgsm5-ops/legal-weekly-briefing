@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 
 STATE_PATH = Path.home() / ".config" / "weread_state.json"
-CHROMIUM = Path.home() / "Library/Caches/ms-playwright/chromium-1223/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 
 POLL_INTERVAL = 2      # 秒
 POLL_TIMEOUT = 300     # 秒（5 分钟扫码窗口）
@@ -34,7 +33,12 @@ async def main_async(force: bool) -> int:
     from playwright.async_api import async_playwright
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False, executable_path=str(CHROMIUM))
+        try:
+            browser = await p.chromium.launch(headless=False)
+        except Exception as e:
+            print(f"❌ 浏览器启动失败: {e}", file=sys.stderr)
+            print("请先安装 playwright 浏览器：python3 -m playwright install chromium", file=sys.stderr)
+            sys.exit(1)
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             viewport={"width": 1280, "height": 900},

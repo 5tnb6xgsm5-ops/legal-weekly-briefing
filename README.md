@@ -62,7 +62,7 @@ cd ~/.workbuddy/skills/legal-weekly-briefing   # 或你的 skill 安装路径
 # build_candidates.py 负责特征提取+标注+分类，产出入参格式的 candidates.jsonl
 PYTHONPATH=scripts python3 scripts/build_candidates.py
 
-# 3. 跑流水线
+# 3. 跑流水线（周报输出在 scripts/ 下：周报_<日期>.md / .html）
 PYTHONPATH=scripts python3 scripts/run_pipeline.py candidates.jsonl
 
 # 4. 自检评分引擎是否工作正常
@@ -160,7 +160,7 @@ legal-weekly-briefing/
 │   ├── import_ima.py            ← 独立 IMA OpenAPI 导入器
 │   ├── fetch_mp_week.py         ← MP 文章批量拉取（需 Session）
 │   ├── normalize_url.py         ← 聚合链接还原为 mp 原始链接
-│   ├── verify.py                ← 回归测试（18 项，安装后自检）
+│   ├── verify.py                ← 回归测试（23 项，安装后自检）
 │   └── install.sh               ← 一键安装脚本
 ├── assets/
 │   ├── config/
@@ -191,7 +191,9 @@ legal-weekly-briefing/
 PYTHONPATH=scripts python3 scripts/verify.py
 ```
 
-期望输出：`23 通过 / 0 失败`。若失败，说明 `assets/config/` 路径未被正确加载（检查 `BASE` 解析），或训练集格式损坏。
+期望输出：`23 通过 / 0 失败`（已配置微信读书登录态时）；未配置登录态的机器为 `22 通过 / 1 失败`——W1 门禁会提示运行 `python3 scripts/weread_login.py` 扫码，属预期行为，不影响评分/演示链路。若其余项失败，说明 `assets/config/` 路径未被正确加载（检查 `BASE` 解析），或训练集格式损坏。
+
+**Level 3 内容发现前置**：自动抓取公众号文章需要 `pip3 install playwright && python3 -m playwright install chromium`（首次）并完成微信读书扫码登录；缺任一依赖时，流水线会自动降级到下一层通道，周报仍可产出。
 
 **真实数据回放**：将你自己的周报候选粘贴为 `candidates.jsonl`，跑 `run_pipeline.py`，对比输出分数与你的主观判断。62 条训练集偏特定执业方向视角，若你的领域不同，直接编辑 `scoring-training.jsonl` 的标注即可——引擎会自动 coalesce 同向量、冷启动兜底。
 

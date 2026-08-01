@@ -132,17 +132,13 @@ def run_html_gate():
             m = re.search(r'knowledge_base_id:\s*"?([^"\s#]+)"?', kb_line[0])
             kb_val = m.group(1) if m else ""
 
-        # 作者 KB 检测（P0 — 必须阻断）
-        if kb_val.startswith("YOUR_KNOWLEDGE_BASE_ID"):
-            all_ok &= check(False, "G6-KB_ID非作者KB(P0)",
-                            f"检测到作者知识库 ID，禁止导入！请替换为你自建的 KB_ID")
         # 占位符检测（警告 — 打包版合法，但提醒用户配置）
-        elif kb_val in {"YOUR_KNOWLEDGE_BASE_ID", "YOUR_KB_ID", ""} or kb_val.startswith("YOUR_"):
+        if kb_val in {"YOUR_KNOWLEDGE_BASE_ID", "YOUR_KB_ID", ""} or kb_val.startswith("YOUR_"):
             all_ok &= check(True, "G6-KB_ID待配置(警告)",
                             f"knowledge_base_id=占位符 — 打包版正常，用户部署时需替换为自建 KB_ID")
         elif kb_val:
             all_ok &= check(True, "G6-KB_ID已配置",
-                            f"knowledge_base_id={kb_val[:20]}...（已替换为自建 KB）")
+                            f"knowledge_base_id={kb_val[:12]}...（请确认该 ID 属于你自己的知识库）")
 
     # G7: render_html.py 的 radar_score_ceiling 必须从 settings.yaml 读取，不再硬编码
     if render_path.exists():
